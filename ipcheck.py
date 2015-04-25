@@ -17,7 +17,7 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO event SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -49,8 +49,11 @@ except ImportError:
   except ImportError:
     ipcheckadvanced = None
 
+if ipcheckadvanced is not None:
+  from ipcheckadvanced.constant import *
+
 # Global project declarations
-version = '1.0.0'
+version = '2.0.0'
 
 
 class IpCheck:
@@ -93,11 +96,11 @@ class IpCheck:
   def __init__(self):
     """Constructor : Build an ipcheck object
     """
-    # config parser
     # list of urls from which retrieve urls
     self.urls = dict()
     # disable ssl certificate verification False by default
     self.__unsecure_ssl = False
+    self._timeout = 2
     # directory in which to store the local file
     self.directory = '/var/tmp/'
     # ip version number for which to try to retrieve ip address
@@ -108,6 +111,8 @@ class IpCheck:
     # re object for url parsing
     self.__re_url = re.compile(self.REG_E_URL)
     self.__re_ip = re.compile(self.REG_E_IP)
+    # advanced interface
+    self.loader = None
     # init logger
     self.__logger = logging.getLogger('ipcheck')
     self.__logger.setLevel('INFO')
@@ -146,14 +151,16 @@ Options :
     -h, --help       display this help message
     --no-output      disable all output message
     -v, --verbose    show more running messages
-    -V, --version    print the version
+    -V, --version    print the version""")
+    if ipcheckadvanced is not None:
+      print(ipcheckadvanced.USAGE)
 
+    print("""
 Return code :
     0 Success
     1 Other errors during running
     2 Bad argument
-    3 Missing required argument
-""")
+    3 Missing required argument""")
 
   def __parseCmdLineOptions(self, options_list):
     """Parse input main program options (restrict to program strict execution)
@@ -204,7 +211,10 @@ Return code :
       long_opts = ['help', 'version',
                    'verbose', 'no-output',
                    'url=', 'directory=', 'prefix=', 'command=',
-                   'no-ssl-cert']
+                   'no-ssl-cert', 'config=']
+      # if advanced available, load its command options
+      if ipcheckadvanced is not None:
+        long_opts += ipcheckadvanced.LONG_OPTIONS
       options_list, args = getopt.getopt(argv[1:], short_opts, long_opts)
     except getopt.GetoptError as e:
       self.__logger.error(e)
@@ -214,12 +224,20 @@ Return code :
     # retrieve optionnal parameter from cmd line
     self.__parseCmdLineOptions(options_list)
 
-    # check if the advanced feature are available
+    # check if the advanced feature module is available
     if ipcheckadvanced is not None:
       import types
       # LOAD ADVANCED FEATURES
       if isinstance(ipcheckadvanced, types.ModuleType):
-        self.__logger.debug('enable advanced ipcheck features module')
+        self.loader = ipcheckadvanced.IpCheckLoader(self.__logger)
+        # send configuration
+        if self.loader.configure(options_list) and self.loader.load():
+          # initialise python loader
+          self.__logger.debug('enable advanced IPCheck features module')
+          self.addUrl(self.loader.getConfig().getUrlList())
+        else:
+          self.__logger.debug('unable to load advanced ' +
+                              'IPCheck features module')
 
     # retrieve required arguments from cmd line
     # THESE SETTING OVERRIDE OTHER PREVIOUS SETTING
@@ -235,28 +253,28 @@ Return code :
       return 2
     return self.update() != 0
 
-  def addUrl(self, url):
+  def addUrl(self, urls):
     """Entry point for push url to available url list
 
     @param[string] url : the string that correspond to entire url
     @return[integer] : True if add success
                       False url format error
     """
-    if not isinstance(url, str):
-      return False
-    # remove trailing white space
-    url = url.strip()
-    match = self.__re_url.match(url)
-    if match is None:
-      self.__logger.error('Invalid url "' + url + '"')
-      return False
+    if isinstance(urls, str):
+      urls = [urls]
+    for url in urls:
+      # remove trailing white space
+      url = url.strip()
+      match = self.__re_url.match(url)
+      if match is None:
+        self.__logger.error('Invalid url "' + url + '"')
+        return False
 
-    d = match.groupdict()
-    if url not in self.urls:
-      self.urls[url] = d
-      self.__logger.debug('add url : ' + str(d))
-      return True
-    return False
+      d = match.groupdict()
+      if url not in self.urls:
+        self.urls[url] = d
+        self.__logger.debug('add url : ' + str(d))
+    return True
 
   def update(self):
     """Retrieve the current ip adress and make some update
@@ -269,44 +287,116 @@ Return code :
     """
     # store return error number
     ret = 0
+
+    if ipcheckadvanced is not None:
+      # @event : BEFORE_CHECK
+      self.buildevent(E_BEFORE_CHECK, T_NORMAL)
+      # @event : /BEFORE_CHECK
+
     # lookup for ip version
     for vers in self.ip_version:
-      # @EVENT : BEFORE CHECK
+      # RETRIEVING IP
       current_ip = self.retrieveIp(vers=vers)
       if current_ip is None:
-        # @EVENT : ERROR = no ip found
+        self.__logger.error('unable to get current IPv' +
+                            str(vers) + ' address')
         ret += 1
+        if ipcheckadvanced is not None:
+          # @event : ERROR_NOIP = no ip found
+          self.buildevent(E_ERROR, T_ERROR_NOIP)
+          # @event : /ERROR_NOIP = no ip found
         continue
+
       path = self.directory + self.ip_prefix + str(vers)
-      # EXIST + READABLE => check file and compare previous address
+      # FILE EXIST + READABLE => check file and compare previous address
       if os.path.isfile(path) and os.access(path, os.R_OK):
         previous_ip = self.readFromFile(path, vers)
+
+        # error in temporary file
         if previous_ip is None:
-          # @EVENT : ERROR = bad ip from local file
           self.__logger.warn('incorrect address read from local file')
-          self.writeToFile(current_ip, path)
+          if ipcheckadvanced is not None:
+            # @event : ERROR_FILE = bad ip from local file
+            self.buildevent(E_ERROR, T_ERROR_FILE, {
+                'version': vers,
+                'file': path,
+            })
+            # @event : /ERROR_FILE = bad ip from local file
+          # IF FILE WRITABLE
+          if os.access(path, os.W_OK):
+            self.__logger.debug('writing directly the current IPv' +
+                                str(vers) + ' address')
+            self.writeToFile(current_ip, path)
+          else:
+            self.__logger.error('unsufficient permissions on file system')
+            ret += 1
+            if ipcheckadvanced is not None:
+              # @event : ERROR_FILE = bad ip from local file
+              self.buildevent(E_ERROR, T_ERROR_PERMS, {
+                  'version': vers,
+                  'file': path,
+              })
+              # @event : /ERROR_FILE = bad ip from local file
+          continue
+
+        # IP EQUAL
         if current_ip == previous_ip:
-          # @EVENT : NO UPDATE
           self.__logger.info('IPv' + str(vers) + ' unchanged')
+          if ipcheckadvanced is not None:
+            # @event : NOUPDATE
+            self.buildevent(E_NOUPDATE, T_NORMAL, {
+                'version': vers,
+                'current_ip': current_ip,
+            })
+            # @event : /NOUPDATE
+        # IP DIFFERENT
         else:
-          # @EVENT : UPDATE
           self.writeToFile(current_ip, path)
           self.__logger.info('New IPv' + str(vers) + ' ' + current_ip)
           # call user defined command
-          self.makeCall()
-      # NOT EXIST + WRITABLE => just create file and write address into
-      elif os.access(self.directory, os.W_OK):
-        # @EVENT : START CHECKING
+          self.callCommand()
+          if ipcheckadvanced is not None:
+            # @event : UPDATE
+            self.buildevent(E_UPDATE, T_NORMAL, {
+                'version': vers,
+                'current_ip': current_ip,
+                'previous_ip': previous_ip,
+            })
+            # @event : /UPDATE
+
+      # FILE NOT EXIST + DIRECTORY WRITABLE =>
+      #                        just create file and write address into
+      elif not os.path.isfile(path) and os.access(self.directory, os.W_OK):
         self.writeToFile(current_ip, path)
         self.__logger.info('Starting IPv' + str(vers) + ' ' + current_ip)
         # call user defined command
-        self.makeCall()
+        self.callCommand()
+        if ipcheckadvanced is not None:
+          # @event : START
+          self.buildevent(E_START, T_NORMAL, {
+              'version': vers,
+              'current_ip': current_ip,
+          })
+          # @event : /START
+      # NO SUFFICIENT PERMISSIONS
       else:
-        # @EVENT : ERROR = read/write right
         self.__logger.error('unsufficient permissions on file system')
         ret += 1
+        if ipcheckadvanced is not None:
+          # @event : ERROR = read/write right
+          self.buildevent(E_ERROR, T_ERROR_PERMS, {
+              'version': vers,
+              'file': path,
+          })
+          # @event : /ERROR = read/write right
         continue
-      # @EVENT : AFTER CHECK
+
+      if ipcheckadvanced is not None:
+        # @event : AFTER CHECK
+        self.buildevent(E_AFTER_CHECK, T_NORMAL, {
+            'status': ret == 0,
+        })
+        # @event : /AFTER CHECK
     return ret
 
   def retrieveIp(self, vers=4):
@@ -316,7 +406,7 @@ Return code :
     It will stop at the first url for which the query success
     @param[integer] vers : the ip version
     @return[string] : The ip address string if found
-            None  if no address match
+           [None]  if no address match
     """
     for key in self.urls:
       self.__logger.debug('USE ' + key)
@@ -331,18 +421,19 @@ Return code :
         self.__logger.debug('     -> protocol http')
         if port is None:
           port = http.client.HTTP_PORT
-        conn = http.client.HTTPConnection(host, port, timeout=2)
+        conn = http.client.HTTPConnection(host, port, timeout=self._timeout)
       elif fields['proto'] == 'https':
         self.__logger.debug('     -> protocol secure http')
         if port is None:
           port = http.client.HTTPS_PORT
         if self.__unsecure_ssl:
           context = ssl._create_unverified_context()
-          self.__logger.debug('     -> SSL certificate check is DISABLED')
+          self.__logger.debug('     ->' +
+                              ' SSL certificate verification is DISABLED')
         else:
           context = None
         conn = http.client.HTTPSConnection(host, port,
-                                           timeout=2,
+                                           timeout=self._timeout,
                                            context=context)
       else:
         self.__logger.debug('     -> unmanaged protocol : ' +
@@ -391,11 +482,11 @@ Return code :
         continue
 
       # lookup for ip matching
-      st = self.__re_ip.search(data)
-      if st:
-        self.__logger.debug('     => get ip address ' +
-                            st.group('ipv' + str(vers)))
-        return st.group('ipv' + str(vers))
+      match = self.__re_ip.search(data)
+      if match:
+        ip = match.group('ipv' + str(vers))
+        self.__logger.debug('     => get IPv' + str(vers) + ' address ' + ip)
+        return ip
     self.__logger.critical('Cannot obtains current address from any of' +
                            ' the given urls')
     return None
@@ -412,7 +503,7 @@ Return code :
       f = open(file, 'w')
       f.write(content + '\n')
       f.close()
-    except IOError:
+    except IOError as e:
       self.__logger.critical(str(e))
       return False
     return True
@@ -435,12 +526,13 @@ Return code :
       self.__logger.error(str(e))
       return None
     # check read ip format
-    st = self.__re_ip.search(data)
-    if st:
-      self.__logger.debug('read ip address ' + st.group('ipv' + str(vers)))
-      return st.group('ipv' + str(vers))
+    match = self.__re_ip.search(data)
+    if match:
+      ip = match.group('ipv' + str(vers))
+      self.__logger.debug('read ip address ' + ip)
+      return ip
 
-  def makeCall(self):
+  def callCommand(self):
     """Call the given command
 
     This function call the command given by parameter (if available)
@@ -451,6 +543,20 @@ Return code :
         self.__logger.debug('command has return success')
       else:
         self.__logger.warning('command has return non-zero value')
+
+  def buildevent(self, event, type, data=dict()):
+    """Build a new event and call associated action
+
+    @param[int] event : the event type
+    @param[int] type : the event code
+    @param[dict] OPTIONNAL data : an optionnal dictionnary which contain
+            some value that will be given to handler objects
+    """
+    # if avanced feature available push new event
+    if self.loader is not None:      
+      self.__logger.debug('build new event ' + str(event) +
+                          ' with type : ' + str(type))
+      self.loader.pushEvent(event, type, data)
 
 
 # Run launcher as the main program
