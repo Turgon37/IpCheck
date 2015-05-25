@@ -53,7 +53,7 @@ if ipcheckadvanced is not None:
   from ipcheckadvanced.constant import *
 
 # Global project declarations
-version = '2.0.0'
+version = '2.0.1'
 
 
 class IpCheck:
@@ -256,7 +256,8 @@ Return code :
   def addUrl(self, urls):
     """Entry point for push url to available url list
 
-    @param[string] url : the string that correspond to entire url
+    @param[string/list] urls : the string that correspond to an entire url
+                                a list of string that describe several urls
     @return[integer] : True if add success
                       False url format error
     """

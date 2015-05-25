@@ -114,7 +114,7 @@ class Extension(ExtensionBase):
                         False otherwise
     """
     conf = self._config
-    if event in [E_UPDATE, E_NOUPDATE] and type == T_NORMAL:
+    if event in [E_NOUPDATE] and type == T_NORMAL:
       output = subprocess.check_output(['dig', '+noall',
                                                '+answer',
                                                '@' + conf['server'],
