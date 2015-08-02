@@ -33,6 +33,29 @@ import socket
 from .base import ExtensionBase
 from ..constant import *
 
+"""This extension provide a mail sending on IpCheck Events
+
+The configuration take theses options :
+  sender : the name/address of sender field into each mails
+  recipient : the mail addres to which each mail will be supplied
+      (multiple mail allowed separated by colon ',')
+  tag : a string to put into bracket in the mail subject.
+      This help you to identify a mail among several other
+  body : The template of the mail content. This string use string format
+      tags. For example theses tag must be put into embrace to be replaced
+      by dynamic content during execution :
+      {message} will be replaced by a description of the recently happend event
+  server : the smtp server hostname
+  port : the smtp server port
+  auth : a boolean indicates if the smtp need authentication or not.
+      If set to True the two next parameters must be filled
+  username : the smtp login username
+  password : the smtp login password
+  start_tls : a boolean that indicates to use or not STARTTLS
+  ssl : a boolean that describe the SSL status
+  info_mail : a boolean that indicates if the informations mails must be send
+"""
+
 
 class Extension(ExtensionBase):
   """A simple mail trigger which send a mail to someone
@@ -73,15 +96,29 @@ class Extension(ExtensionBase):
     else:
       config['auth'] = false
 
+    # check tag for mail subject
     if 'tag' not in config:
       config['tag'] = 'IPCHECK'
     else:
       config['tag'] = config['tag'].strip('[]')
 
+    # check default body
     if 'body' not in config:
       self._logger.error('Extension "' + self.getName() +
                          '" need a valid body for mail content')
       return False
+    
+    #
+    if 'info_mail' in config:
+      if config['info_mail'] in self.BOOL_TRUE_MAP:
+        config['info_mail'] = True
+      else:
+        self._logger.error('Extension "' + self.getName() +
+                           '" bad value for info_mail parameter')
+        return False
+    else:
+      config['info_mail'] = False
+  
     return True
 
   def handle(self, event, type, data):
@@ -100,17 +137,20 @@ class Extension(ExtensionBase):
       version = ''
 
     # Apply event type
-    if event == E_UPDATE:
+    if event == E_UPDATE and conf['info_mail'] == True:
+      # IP was updated
       subject += ' Updating IP' + version
       message = ('The IP' + version + ' address associated to the host <' +
                  socket.getfqdn() + '> have been updated to (' +
                  data['current_ip'] + ')')
-    elif event == E_START:
+    elif event == E_START and conf['info_mail'] == True:
+      # IP checking system was started
       subject += ' Starting IP' + version
       message = ('The IP' + version + ' address associated to the host <' +
                  socket.getfqdn() + '> have been set to (' +
                  data['current_ip'] + ')')
     elif event == E_ERROR:
+      # IP checker has encounter an error
       if type == T_ERROR_FILE:
         subject += ' Error with file'
         message = ('The IP' + version + ' address read from local file "' +
