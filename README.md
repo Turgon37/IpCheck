@@ -4,6 +4,8 @@ This script must be run as a routine, it check regularly your external (public) 
 
 Currently, the script keep a file up to date with your current public IP(v4) address and can run a command (see --command) after each update
 
+The bash script ipcheck.sh is in this repository only for history backup. DO NOT USE IT, please prefer using the python version instead.
+
 ## Usage
 
 ```bash
