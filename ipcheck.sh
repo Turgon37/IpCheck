@@ -40,7 +40,9 @@ IPV4_URL="http://bot.whatismyipaddress.com/"
 ACTION_DIR='scripts/'
 
 ## LINKED SCRIPTS
-DYN_UPDATE_SCRIPT='dyn_update.sh'
+# This script can be found at 
+# https://github.com/Turgon37/DynUpdate/blob/master/dynupdate.sh
+DYN_UPDATE_SCRIPT='dynupdate.sh'
 
 ## DYN DNS PARAMETERS
 # remote server to which send dyn update string
