@@ -90,7 +90,7 @@ class Extension(ExtensionBase):
         self.executable = output
     # else command is relative to the extension directory
     else:
-      cmd = os.path.dirname(os.path.realpath(__file__)) + '/' + cmd
+      cmd = os.path.dirname(os.path.realpath(__file__)) + RESOURCES_DIR + cmd
       if os.path.isfile(cmd) and os.access(cmd, os.X_OK):
         self.executable = cmd
 
