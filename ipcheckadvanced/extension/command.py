@@ -98,16 +98,15 @@ class Extension(ExtensionBase):
     if 'exec' not in self._config:
       return False
     cmd = self._config['exec'].strip()
-    DEVNULL = open(os.devnull, 'w')
     # if command is given as full path
     if cmd[0] == '/':
       if os.path.isfile(cmd) and os.access(cmd, os.X_OK):
         self.executable = cmd
     # else try to find the command with 'which' call
-    elif subprocess.call(['which', cmd], stdout=DEVNULL, stderr=DEVNULL) == 0:
-      output = subprocess.check_output(['which', cmd]).decode()
-      if os.path.isfile(output) and os.access(output, os.X_OK):
-        self.executable = output
+    elif subprocess.call(['which', cmd],
+                         stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL) == 0:
+      self.executable = cmd
     # else command is relative to the extension directory
     else:
       cmd = os.path.dirname(os.path.realpath(__file__)) + RESOURCES_DIR + cmd
@@ -142,12 +141,34 @@ class Extension(ExtensionBase):
     @return [bool] :  True if execution success
                         False otherwise
     """
+    # if the current event is in the allowed list
     if self.executable and event in self.event:
+      # if argument are specified
       if len(self.args):
+        # loop over each arguments to try to replace strings token by
+        # associated values
         for index in range(len(self.args)):
           self.args[index] = self.args[index].format(
               ip=data['current_ip']
           )
       self._logger.info('Run ' + self.executable)
-      return subprocess.call([self.executable] + self.args) == 0
-    return True
+      try:
+        out = subprocess.check_output([self.executable] + self.args,
+                                      stderr=subprocess.STDOUT,
+                                      universal_newlines=True)
+        #out is currently not used
+      except subprocess.CalledProcessError as e:
+        self._logger.error('command "' + self.executable +
+                           '" encount an error : ' + str(e.returncode))
+        self._receiver.pushEvent(E_ERROR, T_ERROR_EXTENSION, {
+            'msg': e.output,
+            'extension': self.getName()
+        })
+        return (e.returncode == 0)
+      except Exception as e:
+        self._logger.error('command' + self.executable + e)
+        return False
+      return True
+    # this event is not registered
+    else:
+      return True
