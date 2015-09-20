@@ -82,7 +82,7 @@ class Extension(ExtensionBase):
     if subprocess.call(['which', 'dig'],
                        stdout=subprocess.DEVNULL,
                        stderr=subprocess.DEVNULL) != 0:
-      self._logger.error("Need the 'dig' command. Please install it')
+      self._logger.error("Need the 'dig' command. Please install it")
       return False
     if 'server' in self._config:
       if re.match(self.REG_E_IPV4, self._config['server']) is None:
@@ -92,7 +92,7 @@ class Extension(ExtensionBase):
 
     if 'hostname' in self._config:
       if re.match(self.REG_E_HOST, self._config['hostname']) is None:
-        self._logger.error("Need a valid hostname')
+        self._logger.error('Need a valid hostname')
         return False
     else:
       self._logger.error('Need a hostname')

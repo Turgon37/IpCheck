@@ -54,7 +54,7 @@ if ipcheckadvanced is not None:
   from ipcheckadvanced.constant import *
 
 # Global project declarations
-version = '2.2.0'
+version = '2.2.1'
 
 
 class IpCheck:

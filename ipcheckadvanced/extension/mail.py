@@ -69,13 +69,12 @@ class Extension(ExtensionBase):
   def load(self):
     """Load the mail trigger with configuration
 
-    @return[boolean] :  True if load success
+    @return [bool] :  True if load success
                         False otherwise
     """
     config = self._config
     if 'sender' not in config or 'recipient' not in config:
-      if self._logger:
-        self._logger.error('Need a mail sender and recipient')
+      self._logger.error('Need a mail sender and recipient')
       return False
 
     if 'start_tls' not in config:
