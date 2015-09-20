@@ -406,8 +406,8 @@ Return code :
 
     This function make a query for each url registered
     It will stop at the first url for which the query success
-    @param[integer] vers : the ip version
-    @return[string] : The ip address string if found
+    @param vers [int] : the ip version
+    @return [str] : The ip address string if found
            [None]  if no address match
     """
     for key in self.urls:
@@ -496,9 +496,9 @@ Return code :
   def writeToFile(self, content, file):
     """Write content (address) to the specified file
 
-    @param[string] content : the content to write in the file
-    @param[string] file : the file path
-    @return[boolean] True if write success
+    @param content [str] : the content to write in the file
+    @param file [str] : the file path
+    @return [bool] True if write success
                     False otherwise
     """
     try:
@@ -513,9 +513,9 @@ Return code :
   def readFromFile(self, file, vers=4):
     """Read the content of specified file and search for ip address
 
-    @param[string] file : the file path
-    @param[integer] vers : the ip version
-    @return[string] The address string
+    @param file [str] : the file path
+    @param vers [int] : the ip version
+    @return [str] The address string
            [None]    if no address can be found
     """
     try:
@@ -549,9 +549,9 @@ Return code :
   def buildevent(self, event, type, data=dict()):
     """Build a new event and call associated action
 
-    @param[int] event : the event type
-    @param[int] type : the event code
-    @param[dict] OPTIONNAL data : an optionnal dictionnary which contain
+    @param event [int] : the event type
+    @param type [int] : the event code
+    @param data [dict] OPTIONNAL : an optionnal dictionnary which contain
             some value that will be given to handler objects
     """
     # if avanced feature available push new event

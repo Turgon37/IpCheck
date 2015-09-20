@@ -24,7 +24,7 @@
 
 """IpCheck - Ip address Checker script
 
-This module is a part of ipcheck script.\n
+This module is a part of ipcheck script.
 It contains all extensions class
 
 """
@@ -72,7 +72,7 @@ class ExtensionBase:
     """Return the name (type) of this trigger
 
     This is an accessor for ipcheck module
-    @return[string] the name of this trigger
+    @return [string] the name of this trigger
     """
     if self._config:
       if 'name' in self._config:
@@ -83,7 +83,7 @@ class ExtensionBase:
     """Use to set a internal logger for this trigger
 
     This is an accessor for ipcheck module
-    @param[logging object] logger : the logger object to use
+    @param logger [logging] : the logger object to use
     """
     self._logger = logger
 
@@ -91,7 +91,7 @@ class ExtensionBase:
     """Use to setup the internal configuration dict by the netsav module
 
     This is an accessor for ipcheck module
-    @param[dict] config : the dict which contains the key value parameters
+    @param config [dict] : the dict which contains the key value parameters
     """
     self._config = config
 
@@ -99,7 +99,7 @@ class ExtensionBase:
     """Use to setup the internal event receiver object
 
     This is an accessor for ipcheck module
-    @param[object] obj : the object on which call pushEvent(event)
+    @param obj [object] : the object on which call pushEvent(event)
                     to push a new event in queue
     """
     self._receiver = obj
@@ -110,7 +110,7 @@ class ExtensionBase:
     API for ipcheck module
     The return value of this function determine if the extension must
     be loaded or not. If this return false, the extension will not be use
-    @return[boolean] :  True if load success
+    @return [bool] :  True if load success
                         False otherwise
     """
     raise NotImplementedError('load()')
@@ -122,15 +122,23 @@ class ExtensionBase:
     The return value of this function will be looked and some log will be
     generated if the result is False
     This function is called each time an event happen. All event contain
-    a set of information about what happen in a python dict. They are available
-    by these key :
+    a set of information about what happen in a python dict.
+    They are available by these key :
+    E_BEFORE_CHECK :
+    E_START : 'version_ip' 'current_ip'
+    E_UPDATE : 'version_ip' 'current_ip' 'previous_ip'
+    E_NOUPDATE : 'version_ip' 'current_ip'
+    E_AFTER_CHECK : 'status'
+    E_ERROR, T_ERROR_PERMS : 'version_ip' 'file'
+    E_ERROR, T_ERROR_PERMS : 'version_ip' 'file'
+    E_ERROR, T_ERROR_NOIP : 'version_ip'
 
-    @param[int] event : the event type integer @see:Constants
-    @param[int] type : the event code whic is more precise about event
+    @param event [int] : the event type integer @see:Constants
+    @param type [int] : the event code whic is more precise about event
                             @see:Constants
-    @param[dict] data : the dict which contains the key value refer to the
+    @param data [dict] : the dict which contains the key value refer to the
                           event
-    @return[boolean] :  True if execution success
+    @return [bool] :  True if execution success
                         False otherwise
     """
     raise NotImplementedError('handle(event)')
