@@ -50,8 +50,8 @@ class IpCheckLoader:
   def configure(self, options_list):
     """Load configuration for this loader object
 
-    @param[dict] options_list : array of option key => value
-    @return[boolean] : True if the configuration success
+    @param options_list [dict] : array of option key => value
+    @return [bool] : True if the configuration success
                       False otherwise
     """
     for opt in options_list:
@@ -66,14 +66,14 @@ class IpCheckLoader:
   def getConfig(self):
     """Return the defined configparser
 
-    @return[IpCheckConfigParser] : the instancied config parser
+    @return [IpCheckConfigParser] : the instancied config parser
     """
     return self.cp
 
   def load(self):
     """Load this trigger object with all defined trigger
 
-    @return[boolean] : True if the loading success
+    @return [bool] : True if the loading success
                       False otherwise
     """
     if not self.cp.isLoaded():
@@ -129,7 +129,7 @@ class IpCheckLoader:
   def hasExtension(self):
     """Check if there is/are registered trigger
 
-    @return[boolean] : True if th trigger handler contains at least one trigger
+    @return [bool] : True if th trigger handler contains at least one trigger
                        False otherwise
     """
     return len(self.__l_extension) > 0
@@ -137,9 +137,9 @@ class IpCheckLoader:
   def pushEvent(self, event, type, data):
     """Push event to be trigged by all referenced trigger
 
-    @param[int] event : the event type
-    @param[int] type : the event code
-    @param[dict] data : a dictionnary that will be given to all extensions
+    @param event [int] : the event type
+    @param type [int] : the event code
+    @param data [dict] : a dictionnary that will be given to all extensions
     """
     assert(data is not None)
 

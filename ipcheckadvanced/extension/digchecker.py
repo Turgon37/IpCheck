@@ -32,6 +32,13 @@ import subprocess
 from . import ExtensionBase
 from ..constant import *
 
+"""This extension provide a DNS lookup for DYN Host entry checking
+
+The configuration take theses options :
+  server : the ip address of DNS server to use for DNS query
+  hostname : The DYN host to lookup
+"""
+
 
 class Extension(ExtensionBase):
   """A simple trigger skeleton
@@ -69,7 +76,7 @@ class Extension(ExtensionBase):
     API for ipcheck module
     The return value of this function determine if the extension must
     be loaded or not. If this return false, the extension will not be use
-    @return[boolean] :  True if load success
+    @return [bool] :  True if load success
                         False otherwise
     """
     DEVNULL = open(os.devnull, 'w')
@@ -105,12 +112,12 @@ class Extension(ExtensionBase):
     a set of information about what happen in a python dict. They are available
     by these key :
 
-    @param[int] event : the event type integer @see:Constants
-    @param[int] type : the event code whic is more precise about event
-                            @see:Constants
-    @param[dict] data : the dict which contains the key value refer to the
+    @param event [int] : the event type integer @see:Constants
+    @param type [int] : the event code whic is more precise about event
+                        @see:Constants
+    @param data [dict] : the dict which contains the key value refer to the
                           event
-    @return[boolean] :  True if execution success
+    @return [bool] :  True if execution success
                         False otherwise
     """
     conf = self._config

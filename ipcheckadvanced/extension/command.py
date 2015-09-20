@@ -31,6 +31,26 @@ import os
 from . import ExtensionBase
 from ..constant import *
 
+"""This extension provide a command execution on IpCheck Events
+
+The configuration take theses options :
+  exec : the name/path of the command to run
+  args : the argument to pass to the command during
+  event : the name list of event when the command will be executed
+
+event can be :
+'E_BEFORE_CHECK',  # empty event for trigge before update
+'E_AFTER_CHECK',  # empty event for trigger after update
+'E_START',  # it's the first time the script is run
+'E_UPDATE',  # the Ip address value have changed
+'E_NOUPDATE',  # Nothing update
+'E_ERROR'  # an error appear see type for detail
+
+"""
+
+# Directory from which retrieve resources file
+RESOURCES_DIR = '/../resources/'
+
 
 class Extension(ExtensionBase):
   """A simple trigger skeleton
