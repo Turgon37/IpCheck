@@ -37,7 +37,7 @@ from ..constant import *
 
 The configuration take theses options :
   sender : the name/address of sender field into each mails
-  recipient : the mail addres to which each mail will be supplied
+  recipient : the mail address to which each mail will be supplied
       (multiple mail allowed separated by colon ',')
   tag : a string to put into bracket in the mail subject.
       This help you to identify a mail among several other
@@ -75,8 +75,7 @@ class Extension(ExtensionBase):
     config = self._config
     if 'sender' not in config or 'recipient' not in config:
       if self._logger:
-        self._logger.error('Extension "' + self.getName() +
-                           '" need a mail sender and recipient')
+        self._logger.error('Need a mail sender and recipient')
       return False
 
     if 'start_tls' not in config:

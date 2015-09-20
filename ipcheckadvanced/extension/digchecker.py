@@ -92,12 +92,10 @@ class Extension(ExtensionBase):
 
     if 'hostname' in self._config:
       if re.match(self.REG_E_HOST, self._config['hostname']) is None:
-        self._logger.error('Extension "' + self.getName() +
-                           '" need a valid hostname')
+        self._logger.error("Need a valid hostname')
         return False
     else:
-      self._logger.error('Extension "' + self.getName() +
-                         '" need a hostname')
+      self._logger.error('Need a hostname')
       return False
 
     return True
