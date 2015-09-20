@@ -126,8 +126,8 @@ class Extension(ExtensionBase):
     subject = '[' + socket.gethostname() + '][' + conf['tag'] + '] '
     message = None
 
-    if 'version' in data:
-      version = 'v' + data['version']
+    if 'version_ip' in data:
+      version = 'v' + data['version_ip']
     else:
       version = ''
 

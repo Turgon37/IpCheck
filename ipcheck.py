@@ -305,7 +305,9 @@ Return code :
         ret += 1
         if ipcheckadvanced is not None:
           # @event : ERROR_NOIP = no ip found
-          self.buildevent(E_ERROR, T_ERROR_NOIP)
+          self.buildevent(E_ERROR, T_ERROR_NOIP, {
+              'version_ip': vers,
+          })
           # @event : /ERROR_NOIP = no ip found
         continue
 
@@ -320,7 +322,7 @@ Return code :
           if ipcheckadvanced is not None:
             # @event : ERROR_FILE = bad ip from local file
             self.buildevent(E_ERROR, T_ERROR_FILE, {
-                'version': vers,
+                'version_ip': vers,
                 'file': path,
             })
             # @event : /ERROR_FILE = bad ip from local file
@@ -335,7 +337,7 @@ Return code :
             if ipcheckadvanced is not None:
               # @event : ERROR_FILE = bad ip from local file
               self.buildevent(E_ERROR, T_ERROR_PERMS, {
-                  'version': vers,
+                  'version_ip': vers,
                   'file': path,
               })
               # @event : /ERROR_FILE = bad ip from local file
@@ -347,7 +349,7 @@ Return code :
           if ipcheckadvanced is not None:
             # @event : NOUPDATE
             self.buildevent(E_NOUPDATE, T_NORMAL, {
-                'version': vers,
+                'version_ip': vers,
                 'current_ip': current_ip,
             })
             # @event : /NOUPDATE
@@ -360,7 +362,7 @@ Return code :
           if ipcheckadvanced is not None:
             # @event : UPDATE
             self.buildevent(E_UPDATE, T_NORMAL, {
-                'version': vers,
+                'version_ip': vers,
                 'current_ip': current_ip,
                 'previous_ip': previous_ip,
             })
@@ -376,7 +378,7 @@ Return code :
         if ipcheckadvanced is not None:
           # @event : START
           self.buildevent(E_START, T_NORMAL, {
-              'version': vers,
+              'version_ip': vers,
               'current_ip': current_ip,
           })
           # @event : /START
@@ -387,7 +389,7 @@ Return code :
         if ipcheckadvanced is not None:
           # @event : ERROR = read/write right
           self.buildevent(E_ERROR, T_ERROR_PERMS, {
-              'version': vers,
+              'version_ip': vers,
               'file': path,
           })
           # @event : /ERROR = read/write right

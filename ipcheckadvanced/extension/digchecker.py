@@ -130,32 +130,33 @@ class Extension(ExtensionBase):
       match = self.__re_ip.search(output.decode())
       if match is None:
         self._receiver.pushEvent(E_ERROR, T_ERROR_EXTENSION, {
-            'subject': 'IPv' + data['version'] + ' lookup',
+            'subject': 'IPv' + data['version_ip'] + ' lookup',
             'msg': 'The digchecker extension was unable to retrieve' +
-            ' the registered IPv' + data['version'] + ' of the hostname <' +
+            ' the registered IPv' + data['version_ip'] + ' of the hostname <' +
             conf['hostname'] + '> from publid server @' + conf['server']
         })
         return False
 
-      ip = match.group('ipv' + data['version'])
+      ip = match.group('ipv' + data['version_ip'])
       # error between current ip and dns registered ip
       if ip is not None and ip != data['current_ip']:
         self._logger.error('Extension "' + self.getName() +
                            '" detect an invalid lookup ip')
         self._receiver.pushEvent(E_ERROR, T_CUSTOM, {
-            'subject': 'IPv' + data['version'] + ' lookup',
-            'msg': 'An error appear with IPv' + data['version'] +
-            ' address lookup.\nThe looked up dns address is (' + ip +
-            ') and dismatch with current IPv' + data['version'] +
-            ' (' + data['current_ip'] + ')'
+            'subject': 'IPv' + data['version_ip'] + ' lookup',
+            'msg': 'An error appear with IPv' + data['version_ip'] +
+                   ' address lookup.' +
+                   '\nThe looked up dns address is (' + ip + ')' +
+                   ' and dismatch with current IPv' + data['version_ip'] +
+                   ' (' + data['current_ip'] + ')'
         })
         self._receiver.pushEvent(E_UPDATE, T_CUSTOM, data)
       # unable to get ip from dig command
       elif ip is None:
         self._receiver.pushEvent(E_ERROR, T_ERROR_EXTENSION, {
-            'subject': 'IPv' + data['version'] + ' lookup',
+            'subject': 'IPv' + data['version_ip'] + ' lookup',
             'msg': 'The digchecker extension was unable to retrieve' +
-            ' the registered IPv' + data['version'] + ' of the hostname <' +
+            ' the registered IPv' + data['version_ip'] + ' of the hostname <' +
             conf['hostname'] + '> from publid server @' + conf['server']
         })
         return False
