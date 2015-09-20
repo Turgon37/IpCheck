@@ -212,7 +212,7 @@ Return code :
       long_opts = ['help', 'version',
                    'verbose', 'no-output',
                    'url=', 'directory=', 'prefix=', 'command=',
-                   'no-ssl-cert', 'config=']
+                   'no-ssl-cert']
       # if advanced available, load its command options
       if ipcheckadvanced is not None:
         long_opts += ipcheckadvanced.LONG_OPTIONS
