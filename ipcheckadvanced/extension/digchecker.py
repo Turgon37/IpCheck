@@ -153,13 +153,3 @@ class Extension(ExtensionBase):
         })
         return False
     return True
-
-
-
-
-
-
-
-
-
-

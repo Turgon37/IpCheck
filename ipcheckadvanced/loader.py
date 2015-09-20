@@ -109,7 +109,7 @@ class IpCheckLoader:
                               '" cannot be load')
       except ImportError as e:
         self.__logger.error('[EXT] Ext "' + ext_name +
-                            '" name cannot be found in extension directory '+
+                            '" name cannot be found in extension directory ' +
                             str(e))
       except NotImplementedError as e:
         self.__logger.error('[EXT] Ext "' + ext_name +

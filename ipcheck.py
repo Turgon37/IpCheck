@@ -555,7 +555,7 @@ Return code :
             some value that will be given to handler objects
     """
     # if avanced feature available push new event
-    if self.loader is not None:      
+    if self.loader is not None:
       self.__logger.debug('build new event ' + str(event) +
                           ' with type : ' + str(type))
       self.loader.pushEvent(event, type, data)
