@@ -114,12 +114,12 @@ class Extension(ExtensionBase):
     a set of information about what happen in a python dict. They are available
     by these key :
 
-    @param[int] event : the event type integer @see:Constants
-    @param[int] type : the event code whic is more precise about event
+    @param event [int] : the event type integer @see:Constants
+    @param type [int] : the event code whic is more precise about event
                             @see:Constants
-    @param[dict] data : the dict which contains the key value refer to the
+    @param data [dict] : the dict which contains the key value refer to the
                           event
-    @return[boolean] :  True if execution success
+    @return [bool] :  True if execution success
                         False otherwise
     """
     if self.executable and event in self.event:

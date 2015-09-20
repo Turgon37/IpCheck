@@ -126,7 +126,7 @@ class ExtensionBase:
     by these key :
 
     @param[int] event : the event type integer @see:Constants
-    @param[int] type : the event code whic is more precise about event          
+    @param[int] type : the event code whic is more precise about event
                             @see:Constants
     @param[dict] data : the dict which contains the key value refer to the
                           event
