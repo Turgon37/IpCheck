@@ -28,7 +28,7 @@ import subprocess
 import os
 
 # Projet Imports
-from .base import ExtensionBase
+from . import ExtensionBase
 from ..constant import *
 
 
