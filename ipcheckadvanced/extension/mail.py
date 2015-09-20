@@ -104,18 +104,16 @@ class Extension(ExtensionBase):
     if 'body' not in config:
       self._logger.error('Need a valid body for mail content')
       return False
-    
+
     #
     if 'info_mail' in config:
       if config['info_mail'] in self.BOOL_TRUE_MAP:
         config['info_mail'] = True
       else:
-        self._logger.error('Extension "' + self.getName() +
-                           '" bad value for info_mail parameter')
-        return False
+        config['info_mail'] = False
     else:
       config['info_mail'] = False
-  
+
     return True
 
   def handle(self, event, type, data):
@@ -125,7 +123,7 @@ class Extension(ExtensionBase):
                         False otherwise
     """
     conf = self._config
-    subject = '[' + socket.gethostname() + '][' + conf['tag'] + ']'
+    subject = '[' + socket.gethostname() + '][' + conf['tag'] + '] '
     message = None
 
     if 'version' in data:
@@ -136,37 +134,36 @@ class Extension(ExtensionBase):
     # Apply event type
     if event == E_UPDATE and conf['info_mail'] == True:
       # IP was updated
-      subject += ' Updating IP' + version
+      subject += 'Updating IP' + version
       message = ('The IP' + version + ' address associated to the host <' +
                  socket.getfqdn() + '> have been updated to (' +
                  data['current_ip'] + ')')
     elif event == E_START and conf['info_mail'] == True:
       # IP checking system was started
-      subject += ' Starting IP' + version
+      subject += 'Starting IP' + version
       message = ('The IP' + version + ' address associated to the host <' +
                  socket.getfqdn() + '> have been set to (' +
                  data['current_ip'] + ')')
     elif event == E_ERROR:
       # IP checker has encounter an error
       if type == T_ERROR_FILE:
-        subject += ' Error with file'
+        subject += 'Error with file'
         message = ('The IP' + version + ' address read from local file "' +
                    data['file'] + '" is incorrect')
       elif type == T_ERROR_PERMS:
-        subject += ' Error with permissions'
+        subject += 'Error with permissions'
         message = ('There is an error with filesystem permission on file "' +
                    data['file'] + '".\nPlease check this problem quickly,' +
                    ' this application may be broken.')
       elif type == T_CUSTOM:
-        subject += ' Error ' + data['subject']
+        subject += 'Error ' + data['subject']
         message = data['msg']
       else:
         self._logger.error('No mail message configured for this ERROR.' +
                            'Please contact administrator')
 
     if message is not None:
-      body = conf['body'].replace('\\n', '\n').format(
-          message=message)
+      body = conf['body'].replace('\\n', '\n').format(message=message)
       return self.sendmail(subject, body)
     return True
 
