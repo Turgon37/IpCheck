@@ -79,10 +79,10 @@ class Extension(ExtensionBase):
     @return [bool] :  True if load success
                         False otherwise
     """
-    DEVNULL = open(os.devnull, 'w')
-    if subprocess.call(['which', 'dig'], stdout=DEVNULL, stderr=DEVNULL) != 0:
-      self._logger.error('Extension "' + self.getName() +
-                         '" need the dig command')
+    if subprocess.call(['which', 'dig'],
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL) != 0:
+      self._logger.error("Need the 'dig' command. Please install it')
       return False
     if 'server' in self._config:
       if re.match(self.REG_E_IPV4, self._config['server']) is None:
@@ -122,12 +122,12 @@ class Extension(ExtensionBase):
     """
     conf = self._config
     if event in [E_NOUPDATE] and type == T_NORMAL:
-      output = subprocess.check_output(['dig', '+noall',
-                                               '+answer',
-                                               '@' + conf['server'],
-                                               conf['hostname']
-                                        ])
-      match = self.__re_ip.search(output.decode())
+      out = subprocess.check_output(['dig', '+noall',
+                                            '+answer',
+                                            '@' + conf['server'],
+                                            conf['hostname']
+                                     ])
+      match = self.__re_ip.search(out.decode())
       if match is None:
         self._receiver.pushEvent(E_ERROR, T_ERROR_EXTENSION, {
             'subject': 'IPv' + data['version_ip'] + ' lookup',
