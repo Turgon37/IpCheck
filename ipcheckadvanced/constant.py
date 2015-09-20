@@ -24,30 +24,31 @@
 
 """IpCheck - Constant file
 
-This file contains all Event constant. Use these keyword\n
-to give event code and event type
+This file contains all Event constant.
+Use these keyword to give event code and event type
 """
 
-__all__ = ['E_BEFORE_CHECK', 'E_AFTER_CHECK',
-           'E_START', 'E_UPDATE', 'E_NOUPDATE',
-           'E_ERROR',
-           'T_NORMAL', 'T_CUSTOM',
-           'T_ERROR_FILE', 'T_ERROR_NOIP', 'T_ERROR_PERMS', 'T_ERROR_EXTENSION']
-
 # Here are the event enumeration
-E_BEFORE_CHECK = 1
-E_AFTER_CHECK = 3
+g_cstt_event = ['E_BEFORE_CHECK',  # empty event for trigge before update
+                'E_AFTER_CHECK',  # empty event for trigger after update
+                'E_START',  # it's the first time the script is run
+                'E_UPDATE',  # the Ip address value have changed
+                'E_NOUPDATE',  # Nothing update
+                'E_ERROR'  # an error appear see type for detail
+                ]
+# here are the ERROR type enumeration
+g_cstt_type = ['T_NORMAL',  # no error
+               'T_CUSTOM',  # custom error must be described in the 'msg' data
+               'T_ERROR_FILE',  # unable to read previous ip from local file
+               'T_ERROR_NOIP',  # unable to retrieve ip from internet
+               'T_ERROR_PERMS',  # unable to properly access to file system
+               'T_ERROR_EXTENSION'  # error occurs during extension execution
+               ]
 
-E_START = 10
-E_UPDATE = 11
-E_NOUPDATE = 12
+__all__ = g_cstt_event + g_cstt_type
 
-E_ERROR = 20
-
-# here are the event type enumeration
-T_NORMAL = 50
-T_ERROR_NOIP = 51  # unable to retrieve ip from internet
-T_ERROR_FILE = 52  # unable to read previous ip from local file
-T_ERROR_PERMS = 53  # unable to properly access to file system
-T_ERROR_EXTENSION = 54  # error occurs during extension execution
-T_CUSTOM = 60   # custom error the data dict must contain the 'msg' key
+cstt_value = 1
+for cstt in __all__:
+  globals()[cstt] = cstt_value
+  cstt_value += 1
+del cstt_value
