@@ -148,7 +148,7 @@ class Extension(ExtensionBase):
                    ' and dismatch with current IPv' + data['version_ip'] +
                    ' (' + data['current_ip'] + ')'
         })
-        self._receiver.pushEvent(E_UPDATE, T_CUSTOM, data)
+        self._receiver.pushEvent(E_UPDATE, T_NORMAL, data)
       # unable to get ip from dig command
       elif ip is None:
         self._receiver.pushEvent(E_ERROR, T_ERROR_EXTENSION, {
