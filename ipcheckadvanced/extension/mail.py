@@ -152,14 +152,22 @@ class Extension(ExtensionBase):
       elif type == T_ERROR_PERMS:
         subject += 'Error with permissions'
         message = ('There is an error with filesystem permission on file "' +
-                   data['file'] + '".\nPlease check this problem quickly,' +
+                   data['file'] + '".' +
+                   '\nPlease check this problem quickly,' +
+                   ' this application may be broken.')
+      elif type == T_ERROR_EXTENSION:
+        subject += 'Error with extension'
+        message = ('There is an error with extension "' + data['extension'] +
+                   '".\nThis message will inform you about the detail of the' +
+                   ' error :\n' + data['msg'] +
+                   '\nPlease check this problem quickly,' +
                    ' this application may be broken.')
       elif type == T_CUSTOM:
         subject += 'Error ' + data['subject']
         message = data['msg']
       else:
         self._logger.error('No mail message configured for this ERROR.' +
-                           'Please contact administrator')
+                           ' Please contact developper')
 
     if message is not None:
       body = conf['body'].replace('\\n', '\n').format(message=message)
