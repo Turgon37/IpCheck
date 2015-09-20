@@ -114,6 +114,7 @@ class Extension(ExtensionBase):
         self.executable = cmd
 
     if self.executable is None:
+      self._logger.error('Error command not found "' + cmd + '"')
       return False
     else:
       self._logger.debug('Set command ' + self.executable)
