@@ -27,7 +27,7 @@
 
 
 # Projet Imports
-from .base import ExtensionBase
+from . import ExtensionBase
 from ..constant import *
 
 

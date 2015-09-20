@@ -28,7 +28,7 @@ import logging
 
 # Projet Imports
 from .config import IpCheckConfigParser
-from .extension.base import ExtensionBase
+from .extension import ExtensionBase
 
 
 class IpCheckLoader:

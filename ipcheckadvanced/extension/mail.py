@@ -30,7 +30,7 @@ import socket
 
 
 # Projet Imports
-from .base import ExtensionBase
+from . import ExtensionBase
 from ..constant import *
 
 """This extension provide a mail sending on IpCheck Events
