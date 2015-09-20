@@ -29,6 +29,7 @@ import logging
 # Projet Imports
 from .config import IpCheckConfigParser
 from .extension import ExtensionBase
+from .constant import *
 
 
 class IpCheckLoader:
@@ -140,23 +141,31 @@ class IpCheckLoader:
     @param[int] type : the event code
     @param[dict] data : a dictionnary that will be given to all extensions
     """
-    if data is None:
+    assert(data is not None)
+
+    if event != E_ERROR and type != T_NORMAL:
+      self.__logger.error('ERROR type can only be set when event is ERROR.' +
+                          ' Please contact developper')
       return
-
-    if 'version' in data:
-      data['version'] = str(data['version'])
-    else:
-      data['version'] = ''
-
-    if 'msg' not in data:
-      data['msg'] = 'NO MESSAGE'
-
-    if 'file' not in data:
-      data['file'] = 'NO PATH'
-
-    if 'custom' not in data:
-      data['custom'] = 'NO CUSTOM MESSAGE'
-
+    # show new event name
+    if self.__logger.isEnabledFor(logging.DEBUG):
+      event_name = None
+      type_name = None
+      for key in globals():
+        if globals()[key] == event:
+          event_name = key
+        if globals()[key] == type:
+          type_name = key
+      if event_name and type_name:
+        self.__logger.debug('handle event ' + event_name +
+                            ' with type ' + type_name)
+      else:
+        self.__logger.debug('handle event ' + str(event) +
+                            ' with type ' + str(type))
+    # stringify all data values
+    for key in data:
+      data[key] = str(data[key])
+    # propagate event to all registered extensions
     for ext in self.__l_extension:
       try:
         if not ext.handle(event, type, data):
