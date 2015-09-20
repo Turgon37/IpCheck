@@ -99,13 +99,8 @@ class IpCheckConfigParser(configparser.ConfigParser):
     @return[dict] : the parameters dict
     """
     conf = dict(self.items(section))
-    ext_dict = dict()
-    ext_dict['name'] = section.partition('.')[2].lower()
-    for opt in conf:
-      if re.match(ext_dict['name'] + '\.[a-zA-Z]+', opt) is not None:
-        opt_name = opt.partition('.')[2]
-        ext_dict[opt_name] = conf[opt]
-    return ext_dict
+    conf['name'] = section.partition('.')[2].lower()
+    return conf
 
   def getUrlList(self):
     """Return the url list from configuration file
