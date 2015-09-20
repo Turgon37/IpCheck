@@ -97,8 +97,7 @@ class Extension(ExtensionBase):
     if self.executable is None:
       return False
     else:
-      self._logger.debug('Extension "' + self.getName() +
-                         '" set command ' + self.executable)
+      self._logger.debug('Set command ' + self.executable)
 
     if 'args' in self._config:
       self.args += self._config['args'].split()
@@ -129,7 +128,6 @@ class Extension(ExtensionBase):
           self.args[index] = self.args[index].format(
               ip=data['current_ip']
           )
-      self._logger.debug('Extension "' + self.getName() +
-                         '" run ' + self.executable)
+      self._logger.info('Run ' + self.executable)
       return subprocess.call([self.executable] + self.args) == 0
     return True

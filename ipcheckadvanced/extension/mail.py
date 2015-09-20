@@ -86,12 +86,10 @@ class Extension(ExtensionBase):
     if 'auth' in config:
       if config['auth'] in self.BOOL_TRUE_MAP:
         if 'username' not in config:
-          self._logger.error('Extension "' + self.getName() +
-                             '" need a username for auth')
+          self._logger.error('Need a username for auth')
           return False
         if 'password' not in config:
-          self._logger.error('Extension "' + self.getName() +
-                             '" need a password for auth')
+          self._logger.error('Need a password for auth')
           return False
     else:
       config['auth'] = false
@@ -104,8 +102,7 @@ class Extension(ExtensionBase):
 
     # check default body
     if 'body' not in config:
-      self._logger.error('Extension "' + self.getName() +
-                         '" need a valid body for mail content')
+      self._logger.error('Need a valid body for mail content')
       return False
     
     #
@@ -163,6 +160,9 @@ class Extension(ExtensionBase):
       elif type == T_CUSTOM:
         subject += ' Error ' + data['subject']
         message = data['msg']
+      else:
+        self._logger.error('No mail message configured for this ERROR.' +
+                           'Please contact administrator')
 
     if message is not None:
       body = conf['body'].replace('\\n', '\n').format(
@@ -188,8 +188,7 @@ class Extension(ExtensionBase):
                             timeout=1)
     except socket_error as e:
       if self._logger:
-        self._logger.error('Extension "' + self.getName() +
-                           '" unable to connect to ' +
+        self._logger.error('Unable to connect to ' +
                            conf['server'] + ':' + conf['port'])
       return False
 
@@ -203,6 +202,7 @@ class Extension(ExtensionBase):
     msg['Subject'] = subject
     msg['From'] = conf['sender']
     msg['To'] = conf['recipient']
+    self._logger.info('Send mail to "' + conf['recipient'] + '"')
     conn.sendmail(conf['sender'],
                   conf['recipient'].split(','),
                   msg.as_string())

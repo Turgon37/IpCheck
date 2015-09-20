@@ -97,7 +97,7 @@ class IpCheckLoader:
           self.__logger.error('[EXT] Extension "' + ext_name +
                               '" must inherit from TriggerHandler class')
           continue
-        ext.setLogger(self.__logger)
+        ext.setLogger(logging.getLogger('ipcheck.' + ext_name))
         ext.setConfiguration(param)
         ext.setEventReceiver(self)
         if ext.load():

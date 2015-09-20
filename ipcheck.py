@@ -46,8 +46,9 @@ except ImportError:
   try:
     sys.path.insert(1, "/usr/share")
     import ipcheckadvanced
-  except ImportError:
+  except ImportError as e:
     ipcheckadvanced = None
+    print(e, file=sys.stderr)
 
 if ipcheckadvanced is not None:
   from ipcheckadvanced.constant import *
@@ -117,7 +118,7 @@ class IpCheck:
     self.__logger = logging.getLogger('ipcheck')
     self.__logger.setLevel('INFO')
     hdlr = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter("%(levelname)s : %(message)s")
+    formatter = logging.Formatter("%(levelname)s : [%(name)s] %(message)s")
     hdlr.setFormatter(formatter)
     self.__logger.addHandler(hdlr)
 
