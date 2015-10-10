@@ -79,9 +79,10 @@ class Extension(ExtensionBase):
     @return [bool] :  True if load success
                         False otherwise
     """
+    devnull = open("/dev/null", "w")
     if subprocess.call(['which', 'dig'],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL) != 0:
+                       stdout=devnull,
+                       stderr=devnull) != 0:
       self._logger.error("Need the 'dig' command. Please install it")
       return False
     if 'server' in self._config:
