@@ -480,6 +480,9 @@ Return code :
       except socket.error as e:
         self.__logger.debug('     => unable to connect to host ' + str(e))
         continue
+      except http.client.HTTPException:
+        self.__logger.debug('     => error with HTTP query')
+        continue
 
       if res.status == 401:
         self.__logger.debug('     => the server require an authentification')

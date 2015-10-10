@@ -52,13 +52,18 @@ If you want to use advanced features check that you have fill the configuration 
 
 ##### Requires:
   - python version
-    * python >= 3.3
+    * python >= 3.2
 
 ### Example with a DYN Host update
 
   As example if you want to update a Dynamic DNS host after each IP address change you have to do the following instructions :
 
-  * Download DynUpdate project at (https://github.com/Turgon37/DynUpdate) and put into ipcheckadvanced/resources directory
+  Run the configuration script ```./configure``` and fill prompt with correct
+  values
+
+  OR
+
+  * Download DynUpdate project at (https://github.com/Turgon37/DynUpdate) and put into **ipcheckadvanced/resources** directory
   * Put theses lines into configuration files
   ```
   [core]

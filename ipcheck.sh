@@ -37,11 +37,11 @@ IPV4_URL="http://bot.whatismyipaddress.com/"
 
 
 # the directory that contains the script linked by this
-ACTION_DIR='scripts/'
+ACTION_DIR='ipcheckadvanced/resources'
 
 ## LINKED SCRIPTS
 # This script can be found at 
-# https://github.com/Turgon37/DynUpdate/blob/master/dynupdate.sh
+# https://raw.githubusercontent.com/Turgon37/DynUpdate/master/dynupdate.sh
 DYN_UPDATE_SCRIPT='dynupdate.sh'
 
 ## DYN DNS PARAMETERS
@@ -58,7 +58,7 @@ DYNDNS_HOSTNAME='host.example.com'
 # dns server to use for dns checking lookup
 DNS_SERVER='8.8.8.8'
 # hostname to lookup
-DNS_HOSTNAME="$DYNDNS_HOSTNAME"
+DNS_HOSTNAME=$DYNDNS_HOSTNAME
 
 ## MAIL PARAMETERS
 EMAIL_TO="sysadmin@example.com"
