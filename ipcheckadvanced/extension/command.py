@@ -94,6 +94,8 @@ class Extension(ExtensionBase):
         self.event.append(globals()[e])
       else:
         return False
+        
+    devnull = open("/dev/null", "w")
     # check executable presence
     if 'exec' not in self._config:
       return False
@@ -104,8 +106,8 @@ class Extension(ExtensionBase):
         self.executable = cmd
     # else try to find the command with 'which' call
     elif subprocess.call(['which', cmd],
-                         stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL) == 0:
+                         stdout=devnull,
+                         stderr=devnull) == 0:
       self.executable = cmd
     # else command is relative to the extension directory
     else:
