@@ -30,7 +30,8 @@ echo -e '\n\n'
 case $choice in
   1)
     echo ' => Downloading the dynupdate script from github'
-    wget -O ipcheckadvanced/resources/dynupdate.sh -q https://raw.githubusercontent.com/Turgon37/DynUpdate/master/dynupdate.sh || exit 1
+    wget -O ipcheckadvanced/resources/dynupdate.py -q https://raw.githubusercontent.com/Turgon37/DynUpdate/master/dynupdate.py || exit 1
+    chmod +x ipcheckadvanced/resources/dynupdate.py
     echo -e ' => Copy IpCheck configuration to \e[33m config_user.conf \e[0m'
     cp -i config.conf config_user.conf || exit 1
     read -p 'Enter the server of your dynhost : ' server
