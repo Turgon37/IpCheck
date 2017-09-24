@@ -79,6 +79,9 @@ class Extension(ExtensionBase):
 
     if 'start_tls' not in config:
       config['start_tls'] = False
+      
+    if 'ssl' not in config:
+      config['ssl'] = False
 
     # check username and password
     if 'auth' in config:
