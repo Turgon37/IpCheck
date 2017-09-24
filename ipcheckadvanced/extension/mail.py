@@ -90,7 +90,7 @@ class Extension(ExtensionBase):
           self._logger.error('Need a password for auth')
           return False
     else:
-      config['auth'] = false
+      config['auth'] = False
 
     # check tag for mail subject
     if 'tag' not in config:
