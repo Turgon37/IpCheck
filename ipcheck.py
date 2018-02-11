@@ -180,12 +180,13 @@ class IpCheck:
             # send configuration
             if self.loader.configure(options):
                 # initialise python loader
+                self.__logger.debug('advanced IPCheck features module successfully configured')
                 self.__logger.debug('fetch urls from config file')
-                for url in self.loader.getAdditionnalsUrls():
-                    self.addUrl(url)
+                for ip_version in self.__ip_versions:
+                    for url in self.loader.getAdditionnalsUrls(ip_version):
+                        self.addUrl(url, ip_version)
             else:
-                self.__logger.debug('unable to load advanced ' +
-                                  'IPCheck features module')
+                self.__logger.debug('unable to configure advanced IPCheck features module')
 
     def start(self):
         """Entry point of the program
@@ -202,6 +203,11 @@ class IpCheck:
             except:
                 self.__logger.error('Unable to create the required directory %s', self.__tmp_directory)
                 return 2
+        if self.loader.load():
+            self.__logger.debug('advanced IPCheck features module successfully loaded')
+        else:
+            self.__logger.debug('unable to load advanced IPCheck features module')
+
         return self.update() != 0
 
     def addUrl(self, url, ip_version=4):
@@ -216,13 +222,15 @@ class IpCheck:
         url = url.strip()
         match = self.RE_URL.match(url)
         if match is None:
-            self.__logger.error('Invalid url "' + url + '"')
+            self.__logger.error('Invalid url for IPv%d "%s", not added', ip_version, url)
             return False
 
         d = match.groupdict()
         if url not in self.__urls[ip_version]:
             self.__urls[ip_version][url] = d
-            self.__logger.debug('add url : ' + str(d))
+            self.__logger.debug('add url for IPv%d: %s', ip_version, str(d))
+        else:
+            self.__logger.debug('url already exists for IPv%d: %s', ip_version, str(d))
         return True
 
     def update(self):
@@ -360,7 +368,7 @@ class IpCheck:
                 self.__logger.debug('  -> protocol HTTP')
                 if port is None:
                     port = http.client.HTTP_PORT
-                conn = http.client.HTTPConnection(host, port, timeout=self._timeout)
+                conn = http.client.HTTPConnection(host, port, timeout=self.__timeout)
             elif url_parts['proto'] == 'https':
                 self.__logger.debug('  -> protocol HTTPs')
                 if port is None:
