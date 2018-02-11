@@ -1,9 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
 # This file is a part of ipcheck
 #
-# Copyright (c) 2015 Pierre GINDRAUD
+# Copyright (c) 2015-2018 Pierre GINDRAUD
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
