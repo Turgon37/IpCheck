@@ -23,158 +23,176 @@
 # SOFTWARE.
 
 # System imports
+import configparser
 import logging
 
 
 # Projet Imports
-from .config import IpCheckConfigParser
 from .extension import ExtensionBase
 from .constant import *
 
 
 class IpCheckLoader:
-  """This class design an interface object to provide access to advanced
-   ipcheck feature
-  """
-
-  def __init__(self, logger):
-    """Constructor : build an ipcheck loader
+    """This class design an interface object to provide access to advanced
+    ipcheck feature
     """
-    # Config object
-    self.cp = IpCheckConfigParser()
-    # list of trigger object for handling
-    self.__l_extension = []
-    # internal logger
-    self.__logger = logger
+    CORE_SECTION = 'core'
 
-  def configure(self, options_list):
-    """Load configuration for this loader object
+    def __init__(self, logger):
+        """Constructor : build an ipcheck loader
+        """
+        # Config object
+        self.cp = configparser.ConfigParser()
+        # list of trigger object for handling
+        self.__extensions = []
+        # internal logger
+        self.__logger = logger
 
-    @param options_list [dict] : array of option key => value
-    @return [bool] : True if the configuration success
-                      False otherwise
-    """
-    for opt in options_list:
-      if opt[0] == '--config':
-        if not self.cp.load(opt[1].lstrip('=')):
-          self.__logger.error('Unable to load from configuration file')
-          return False
-        else:
-          self.__logger.debug('advanced configuration successfully loaded')
-    return True
+    def configure(self, options):
+        """Load configuration for this loader object
 
-  def getConfig(self):
-    """Return the defined configparser
+        @param options_list [dict] : array of option key => value
+        @return [bool] : True if the configuration success
+                          False otherwise
+        """
+        if 'config_file' in options and options['config_file']:
+            path = options['config_file']
+            if not ( os.path.isfile(path) and os.access(path, os.R_OK) ):
+                self.__logger.error('Configuration file does not exist or is not readable')
+                return False
+            try:
+                if not self.cp.read(path):
+                    raise configparser.Error('Unable to load from configuration file')
+            except configparser.Error as e:
+                self.__logger.error('Unable to load from configuration file : %s', str(e))
+                return False
 
-    @return [IpCheckConfigParser] : the instancied config parser
-    """
-    return self.cp
+        self.__logger.debug('advanced configuration successfully loaded')
+        return True
 
-  def load(self):
-    """Load this trigger object with all defined trigger
+    def getConfig(self):
+        """Return the defined configparser
 
-    @return [bool] : True if the loading success
-                      False otherwise
-    """
-    if not self.cp.isLoaded():
-      return False
+        @return [IpCheckConfigParser] : the instancied config parser
+        """
+        return self.cp
+
+    def getAdditionnalsUrls(self):
+        """Return the url list from configuration file
+
+        @return[list] : the list of given urls
+        """
+        url = self.cp.get(self.CORE_SECTION, 'url', fallback=None)
+        urls = []
+        if url:
+            for u in url.split(','):
+                urls.append(u.strip())
+        return urls
+
+    def load(self):
+        """Load this trigger object with all defined trigger
+
+        @return [bool] : True if the loading success
+                          False otherwise
+        """
+        pass
     # parse all trigger section in config file
-    for section in self.cp.getExtensionSections():
-      # retrieve the current trigger configuration dict
-      param = self.cp.getExtensionConfigDict(section)
-      ext_name = param['name']
-      # check if the trigger name contains only alpha caracters
-      if not param['name'].isalpha():
-        self.__logger.error('[extension] Extension name "' + ext_name +
-                            '" must contains only alphabetical caracters')
-        continue
-      # import process
-      try:
-        m = __import__('ipcheckadvanced.extension.' + ext_name,
-                       fromlist=['Extension'])
-        ext = m.Extension()
-        if not isinstance(ext, ExtensionBase):
-          # inheritance error
-          self.__logger.error('[EXT] Extension "' + ext_name +
-                              '" must inherit from TriggerHandler class')
-          continue
-        ext.setLogger(logging.getLogger('ipcheck.' + ext_name))
-        ext.setConfiguration(param)
-        ext.setEventReceiver(self)
-        if ext.load():
-          self.__l_extension.append(ext)
-          self.__logger.debug('[EXT] Loaded extension ' + ext_name)
-        else:
-          # loading error
-          self.__logger.error('[EXT] Ext "' + ext_name +
-                              '" cannot be load')
-      except ImportError as e:
-        self.__logger.error('[EXT] Ext "' + ext_name +
-                            '" name cannot be found in extension directory ' +
-                            str(e))
-      except NotImplementedError as e:
-        self.__logger.error('[EXT] Ext "' + ext_name +
-                            '" must implement the method "' + str(e) + '"')
-      except KeyError as e:
-        self.__logger.error('[EXT] Ext "' + ext_name + '" require ' +
-                            str(e) + ' missing parameters see extension ' +
-                            'documentation')
-      except Exception as e:
-        self.__logger.error('[EXT] Ext "' + ext_name +
-                            '" has encounter an unknown error: ' + str(e))
+    # for section in self.cp.getExtensionSections():
+    #   # retrieve the current trigger configuration dict
+    #   param = self.cp.getExtensionConfigDict(section)
+    #   ext_name = param['name']
+    #   # check if the trigger name contains only alpha caracters
+    #   if not param['name'].isalpha():
+    #     self.__logger.error('[extension] Extension name "' + ext_name +
+    #                         '" must contains only alphabetical caracters')
+    #     continue
+    #   # import process
+    #   try:
+    #     m = __import__('ipcheckadvanced.extension.' + ext_name,
+    #                    fromlist=['Extension'])
+    #     ext = m.Extension()
+    #     if not isinstance(ext, ExtensionBase):
+    #       # inheritance error
+    #       self.__logger.error('[EXT] Extension "' + ext_name +
+    #                           '" must inherit from TriggerHandler class')
+    #       continue
+    #     ext.setLogger(logging.getLogger('ipcheck.' + ext_name))
+    #     ext.setConfiguration(param)
+    #     ext.setEventReceiver(self)
+    #     if ext.load():
+    #       self.__l_extension.append(ext)
+    #       self.__logger.debug('[EXT] Loaded extension ' + ext_name)
+    #     else:
+    #       # loading error
+    #       self.__logger.error('[EXT] Ext "' + ext_name +
+    #                           '" cannot be load')
+    #   except ImportError as e:
+    #     self.__logger.error('[EXT] Ext "' + ext_name +
+    #                         '" name cannot be found in extension directory ' +
+    #                         str(e))
+    #   except NotImplementedError as e:
+    #     self.__logger.error('[EXT] Ext "' + ext_name +
+    #                         '" must implement the method "' + str(e) + '"')
+    #   except KeyError as e:
+    #     self.__logger.error('[EXT] Ext "' + ext_name + '" require ' +
+    #                         str(e) + ' missing parameters see extension ' +
+    #                         'documentation')
+    #   except Exception as e:
+    #     self.__logger.error('[EXT] Ext "' + ext_name +
+    #                         '" has encounter an unknown error: ' + str(e))
+    #
+    # # return false if no trigger have been loaded
+    # return self.hasExtensions()
 
-    # return false if no trigger have been loaded
-    return self.hasExtension()
+    def hasExtensions(self):
+        """Check if there is/are registered trigger
 
-  def hasExtension(self):
-    """Check if there is/are registered trigger
+        @return [bool] : True if th trigger handler contains at least one trigger
+                        False otherwise
+        """
+        return len(self.__extension) > 0
 
-    @return [bool] : True if th trigger handler contains at least one trigger
-                       False otherwise
-    """
-    return len(self.__l_extension) > 0
+    def pushEvent(self, event, type, data):
+        """Push event to be trigged by all referenced trigger
 
-  def pushEvent(self, event, type, data):
-    """Push event to be trigged by all referenced trigger
-
-    @param event [int] : the event type
-    @param type [int] : the event code
-    @param data [dict] : a dictionnary that will be given to all extensions
-    """
-    assert(data is not None)
-
-    if event != E_ERROR and type != T_NORMAL:
-      self.__logger.error('ERROR type can only be set when event is ERROR.' +
-                          ' Please contact developper')
-      return
-    # show new event name
-    if self.__logger.isEnabledFor(logging.DEBUG):
-      event_name = None
-      type_name = None
-      for key in globals():
-        if globals()[key] == event:
-          event_name = key
-        if globals()[key] == type:
-          type_name = key
-      if event_name and type_name:
-        self.__logger.debug('handle event ' + event_name +
-                            ' with type ' + type_name)
-      else:
-        self.__logger.debug('handle event ' + str(event) +
-                            ' with type ' + str(type))
-    # stringify all data values
-    for key in data:
-      data[key] = str(data[key])
-    # propagate event to all registered extensions
-    for ext in self.__l_extension:
-      try:
-        if not ext.handle(event, type, data):
-          self.__logger.error('[EXT] Extension "' + ext.getName() +
-                              '" has encounter an error during handle()')
-      except KeyError as e:
-        self.__logger.error('[EXT] Extension "' + ext.getName() +
-                            '" require a missing parameters "' + str(e) +
-                            '" see trigger documentation')
-      except Exception as e:
-        self.__logger.error('[EXT] Extension "' + ext.getName() +
-                            '" has encounter an error: ' + str(e))
+        @param event [int] : the event type
+        @param type [int] : the event code
+        @param data [dict] : a dictionnary that will be given to all extensions
+        """
+        assert(data is not None)
+    #
+    # if event != E_ERROR and type != T_NORMAL:
+    #   self.__logger.error('ERROR type can only be set when event is ERROR.' +
+    #                       ' Please contact developper')
+    #   return
+    # # show new event name
+    # if self.__logger.isEnabledFor(logging.DEBUG):
+    #   event_name = None
+    #   type_name = None
+    #   for key in globals():
+    #     if globals()[key] == event:
+    #       event_name = key
+    #     if globals()[key] == type:
+    #       type_name = key
+    #   if event_name and type_name:
+    #     self.__logger.debug('handle event ' + event_name +
+    #                         ' with type ' + type_name)
+    #   else:
+    #     self.__logger.debug('handle event ' + str(event) +
+    #                         ' with type ' + str(type))
+    # # stringify all data values
+    # for key in data:
+    #   data[key] = str(data[key])
+    # # propagate event to all registered extensions
+    # for ext in self.__l_extension:
+    #   try:
+    #     if not ext.handle(event, type, data):
+    #       self.__logger.error('[EXT] Extension "' + ext.getName() +
+    #                           '" has encounter an error during handle()')
+    #   except KeyError as e:
+    #     self.__logger.error('[EXT] Extension "' + ext.getName() +
+    #                         '" require a missing parameters "' + str(e) +
+    #                         '" see trigger documentation')
+    #   except Exception as e:
+    #     self.__logger.error('[EXT] Extension "' + ext.getName() +
+    #                         '" has encounter an error: ' + str(e))

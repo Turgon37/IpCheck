@@ -43,44 +43,12 @@ class IpCheckConfigParser(configparser.ConfigParser):
   Refer to the config file
   provide more function to parse directly the config file as project's needed
   """
-  CORE_SECTION = 'core'
+  
   REG_E_EXTENSION_SECTION = '^extension\.[a-zA-Z]+$'
 
   # list of  value considered as True in the config file
   BOOL_TRUE_MAP = ['true', 'TRUE', 'True', '1']
 
-  def __init__(self):
-    """Constructor : init a new config parser
-    """
-    configparser.ConfigParser.__init__(self)
-    # boolean that indicates if the configparser is available
-    self.__is_config_loaded = False
-
-  def load(self, config):
-    """Try to load the configuration file
-
-    @param[string] file : the path of the config file
-    @return[boolean] : True if loading is sucess
-                      False if loading fail
-    """
-    if config is None:
-      return False
-    try:
-      if config in self.read(config):
-        self.__is_config_loaded = True
-        return True
-    except configparser.Error as e:
-      print(e, file=sys.stderr)
-      return False
-    return False
-
-  def isLoaded(self):
-    """Return the load state of this config parser
-
-    @return(boolean) : the boolean that indicates if the config
-              file is loaded or not
-    """
-    return self.__is_config_loaded
 
   def getExtensionSections(self):
     """Return the list of trigger section name
@@ -101,16 +69,3 @@ class IpCheckConfigParser(configparser.ConfigParser):
     conf = dict(self.items(section))
     conf['name'] = section.partition('.')[2].lower()
     return conf
-
-  def getUrlList(self):
-    """Return the url list from configuration file
-
-    @return[list] : the list of given urls
-    """
-    url = self.get(self.CORE_SECTION, 'url')
-    urls = []
-
-    for u in url.split(','):
-      u = u.strip()
-      urls.append(u)
-    return urls
