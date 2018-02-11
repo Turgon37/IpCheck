@@ -32,11 +32,8 @@ It contains advanced feature in particular, a event handling class
 # Project imports
 from .loader import IpCheckLoader
 
-__all__ = ['config', 'loader']
+__all__ = ['loader', 'configureArgParser']
 
-USAGE = """
-Advanced options :
-  These options apply only to advanced features
-    --config=PATH  set the path fo the configuration file"""
-
-LONG_OPTIONS = ['config=']
+def configureArgParser(parser):
+    parser.add_argument('--config', action='store', dest='config_file',
+                            help='Path of the configuration file')

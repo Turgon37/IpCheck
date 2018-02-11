@@ -29,24 +29,27 @@ Use these keyword to give event code and event type
 """
 
 # Here are the event enumeration
-g_cstt_event = ['E_BEFORE_CHECK',  # empty event for trigge before update
-                'E_AFTER_CHECK',  # empty event for trigger after update
-                'E_START',  # it's the first time the script is run
-                'E_UPDATE',  # the Ip address value have changed
-                'E_NOUPDATE',  # Nothing update
-                'E_ERROR'  # an error appear see type for detail
-                ]
+g_cstt_event = [
+    'E_BEFORE_CHECK',  # empty event for trigge before update
+    'E_AFTER_CHECK',  # empty event for trigger after update
+    'E_START',  # it's the first time the script is run
+    'E_UPDATE',  # the Ip address value have changed
+    'E_NOUPDATE',  # Nothing update
+    'E_ERROR'  # an error appear see type for detail
+]
 # here are the ERROR type enumeration
-g_cstt_type = ['T_NORMAL',  # no error
-               'T_CUSTOM',  # custom error must be described in the 'msg' data
-               'T_ERROR_FILE',  # unable to read previous ip from local file
-               'T_ERROR_NOIP',  # unable to retrieve ip from internet
-               'T_ERROR_PERMS',  # unable to properly access to file system
-               'T_ERROR_EXTENSION'  # error occurs during extension execution
-               ]
+g_cstt_type = [
+    'T_NORMAL',  # no error
+    'T_CUSTOM',  # custom error must be described in the 'msg' data
+    'T_ERROR_FILE',  # unable to read previous ip from local file
+    'T_ERROR_NOIP',  # unable to retrieve ip from internet
+    'T_ERROR_PERMS',  # unable to properly access to file system
+    'T_ERROR_EXTENSION'  # error occurs during extension execution
+]
 
 __all__ = g_cstt_event + g_cstt_type
 
+# Load each constant with a incremented integer because we don't care about values
 cstt_value = 1
 for cstt in __all__:
   globals()[cstt] = cstt_value
