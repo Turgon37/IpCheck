@@ -100,7 +100,7 @@ class Extension(ExtensionBase):
 
         config = self.getDefaultConfig()
         config.update(self.configuration)
-        if 'server' in config and self.RE_IPV4.match(config['server']) is None:
+        if 'server' in config and self.RE_IP.match(config['server']) is None:
             config['server'] = '8.8.8.8'
 
         if 'hostname' in config:
