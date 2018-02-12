@@ -158,7 +158,7 @@ class ExtensionBase:
     def isTrue(value):
         if not isinstance(value, string_types):
             return value
-        if value.lower() in self.BOOL_TRUE_MAP:
+        if value.lower() in ExtensionBase.BOOL_TRUE_MAP:
             return True
         return False
 
