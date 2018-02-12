@@ -165,7 +165,9 @@ class Extension(ExtensionBase):
         try:
             subject = (conf.get('subject') + conf.get('subject_'+key)).format(**data)
             message = conf.get('message_'+key).format(**data)
-            body = conf['body'].replace('\\n', '\n').format(message=message, **data)
+            body = (conf['body'].replace('\\n', '\n')
+                        .format(message=message, **data)
+                        .format(**data))
         except KeyError as e:
             self.logger.error('One of your configured template use a variable not available in' +
                             ' this context : %s', str(e))
