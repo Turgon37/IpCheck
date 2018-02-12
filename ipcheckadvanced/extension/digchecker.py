@@ -159,7 +159,8 @@ class Extension(ExtensionBase):
                 'subject': conf.get('msg_subject'),
                 'msg': ('An error appear with IPv{version_ip} address lookup.' +
                    '\nThe looked up address is {digchecker_lookup_ip}' +
-                   ' and dismatch with current IPv{version_ip} {current_ip}'),
+                   ' and dismatch with current IPv{version_ip} {current_ip}.' +
+                   '\nIpCheck will trigger an forced update to fix the situation.'),
                 'digchecker_lookup_ip': ip,
             }, data)
             # trigger manually an new update

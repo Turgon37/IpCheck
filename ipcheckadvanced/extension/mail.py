@@ -124,6 +124,14 @@ class Extension(ExtensionBase):
             self.logger.error('Need a valid body for mail content')
             return False
 
+        if 'info_mail' in config:
+            if Extension.isTrue(config['info_mail']):
+                self.logger.debug('info mail enabled')
+                config['info_mail'] = True
+            else:
+                self.logger.debug('info mail disabled')
+                config['info_mail'] = False
+
         self.configuration = config
         return True
 
