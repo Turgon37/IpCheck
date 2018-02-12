@@ -151,13 +151,14 @@ class Extension(ExtensionBase):
             return False
 
         ip = match.group('ipv' + data['version_ip'])
+        self.logger.debug('fetch external ip %s', str(ip))
         # error between current ip and dns registered ip
         if ip and ip != data['current_ip']:
             self.logger.error('Inconsistency detected between local ip and lookup ip')
             self.sendEvent(E_ERROR, T_CUSTOM, {
                 'subject': conf.get('msg_subject'),
                 'msg': ('An error appear with IPv{version_ip} address lookup.' +
-                   '\nThe looked up address is {digchecker_lookup_ip} ' +
+                   '\nThe looked up address is {digchecker_lookup_ip}' +
                    ' and dismatch with current IPv{version_ip} {current_ip}'),
                 'digchecker_lookup_ip': ip,
             })
