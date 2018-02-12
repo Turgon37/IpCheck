@@ -2,7 +2,7 @@
 
 # This file is a part of ipcheck
 #
-# Copyright (c) 2015 Pierre GINDRAUD
+# Copyright (c) 2015-2018 Pierre GINDRAUD
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,159 +58,154 @@ The configuration take theses options :
 
 
 class Extension(ExtensionBase):
-  """A simple mail trigger which send a mail to someone
-  """
-
-  def __init__(self):
-    """Default constructor:
+    """A simple mail trigger which send a mail to someone
     """
-    ExtensionBase.__init__(self)
 
-  def load(self):
-    """Load the mail trigger with configuration
+    def __init__(self):
+        """Default constructor:
+        """
+        ExtensionBase.__init__(self)
 
-    @return [bool] :  True if load success
-                        False otherwise
-    """
-    config = self._config
-    if 'sender' not in config or 'recipient' not in config:
-      self._logger.error('Need a mail sender and recipient')
-      return False
+    def getDefaultConfig(self):
+        """Return the default configuration items for this extension
+        """
+        return super(Extension, self).getDefaultConfig({
+            'auth': False,
+            'info_mail': True,
+            'server': 'localhost',
+            'port': 25,
+            'ssl': False,
+            'start_tls': False,
+            'tag': 'IPCHECK',
+            'subject': '[{hostname}][{tag}] ',
+            'subject_on_start': 'Starting IPv{version_ip}',
+            'message_on_start': ('The IPv{version_ip} address associated to the host ' +
+                '<{hostname_fqdn}> have been set to {current_ip}'),
+            'subject_on_update': 'Updating IPv{version_ip}',
+            'message_on_update': ('The IPv{version_ip} address associated to the host ' +
+                '<{hostname_fqdn}> have been updated to {current_ip}'),
+            'subject_on_error_file': 'Error with temporary file',
+            'message_on_error_file': ('The IPv{version_ip} address read from local file "' +
+                '{file}" is incorrect'),
+            'subject_on_error_perms': 'Error with permissions',
+            'message_on_error_perms': ('There is an error with filesystem permission on file "' +
+                '{file}".\nPlease check this problem quickly, this application may be broken.'),
+            'subject_on_error_extension': 'Error with an extension',
+            'message_on_error_extension': ('There is an error with extension "{extension}".' +
+                '\nThis message will inform you about the detail of the error :\n{msg}' +
+                '\nPlease check this problem quickly, this application may be broken.'),
+            'subject_on_error_custom': 'Error {subject}',
+            'message_on_error_custom': '{msg}',
+        })
 
-    if 'start_tls' not in config:
-      config['start_tls'] = False
-      
-    if 'ssl' not in config:
-      config['ssl'] = False
+    def load(self):
+        """Load the mail trigger with configuration
 
-    # check username and password
-    if 'auth' in config:
-      if config['auth'] in self.BOOL_TRUE_MAP:
-        if 'username' not in config:
-          self._logger.error('Need a username for auth')
-          return False
-        if 'password' not in config:
-          self._logger.error('Need a password for auth')
-          return False
-    else:
-      config['auth'] = False
+        @return [bool] :  True if load success
+                            False otherwise
+        """
+        config = self.getDefaultConfig()
+        config.update(self.configuration)
+        if 'sender' not in config or 'recipient' not in config:
+            self.logger.error('Need a mail sender and recipient')
+            return False
 
-    # check tag for mail subject
-    if 'tag' not in config:
-      config['tag'] = 'IPCHECK'
-    else:
-      config['tag'] = config['tag'].strip('[]')
+        # check username and password
+        if 'auth' in config and Extension.isTrue(config['auth']):
+            if 'username' not in config:
+                self.logger.error('Need a username for auth')
+                return False
+            if 'password' not in config:
+                self.logger.error('Need a password for auth')
+                return False
 
-    # check default body
-    if 'body' not in config:
-      self._logger.error('Need a valid body for mail content')
-      return False
+        # check default body
+        if 'body' not in config:
+            self.logger.error('Need a valid body for mail content')
+            return False
 
-    #
-    if 'info_mail' in config:
-      if config['info_mail'] in self.BOOL_TRUE_MAP:
-        config['info_mail'] = True
-      else:
-        config['info_mail'] = False
-    else:
-      config['info_mail'] = False
+        self.configuration = config
+        return True
 
-    return True
+    def handle(self, event, type, data):
+        """Receive all event from main class
 
-  def handle(self, event, type, data):
-    """Receive all event from main class
+        @return[boolean] :  True if handle success
+                            False otherwise
+        """
+        conf = self.configuration
+        key = None
 
-    @return[boolean] :  True if handle success
-                        False otherwise
-    """
-    conf = self._config
-    subject = '[' + socket.gethostname() + '][' + conf['tag'] + '] '
-    message = None
+        # Apply event type
+        if event == E_UPDATE and conf['info_mail']:
+            # IP was updated
+            key = 'on_update'
+        elif event == E_START and conf['info_mail']:
+            # IP checking system was started
+            key = 'on_start'
+        elif event == E_ERROR:
+            # IP checker has encounter an error
+            if type == T_ERROR_FILE:
+                key = 'on_error_file'
+            elif type == T_ERROR_PERMS:
+                key = 'on_error_perms'
+            elif type == T_ERROR_EXTENSION:
+                key = 'on_error_extension'
+            elif type == T_CUSTOM:
+                key = 'on_error_extension'
+            else:
+                self.logger.error('No mail message configured for this ERROR.' +
+                                ' Please contact developper')
+                return False
+        else:
+            self.logger.debug('No mail configured to catch this event')
+            return True
 
-    if 'version_ip' in data:
-      version = 'v' + data['version_ip']
-    else:
-      version = ''
+        data.update(conf)
+        try:
+            subject = (conf.get('subject') + conf.get('subject_'+key)).format(**data)
+            message = conf.get('message_'+key).format(**data)
+            body = conf['body'].replace('\\n', '\n').format(message=message, **data)
+        except KeyError as e:
+            self.logger.error('One of your configured template use a variable not available in' +
+                            ' this context : %s', str(e))
+            return False
+        return self.sendmail(subject, body)
 
-    # Apply event type
-    if event == E_UPDATE and conf['info_mail'] == True:
-      # IP was updated
-      subject += 'Updating IP' + version
-      message = ('The IP' + version + ' address associated to the host <' +
-                 socket.getfqdn() + '> have been updated to (' +
-                 data['current_ip'] + ')')
-    elif event == E_START and conf['info_mail'] == True:
-      # IP checking system was started
-      subject += 'Starting IP' + version
-      message = ('The IP' + version + ' address associated to the host <' +
-                 socket.getfqdn() + '> have been set to (' +
-                 data['current_ip'] + ')')
-    elif event == E_ERROR:
-      # IP checker has encounter an error
-      if type == T_ERROR_FILE:
-        subject += 'Error with file'
-        message = ('The IP' + version + ' address read from local file "' +
-                   data['file'] + '" is incorrect')
-      elif type == T_ERROR_PERMS:
-        subject += 'Error with permissions'
-        message = ('There is an error with filesystem permission on file "' +
-                   data['file'] + '".' +
-                   '\nPlease check this problem quickly,' +
-                   ' this application may be broken.')
-      elif type == T_ERROR_EXTENSION:
-        subject += 'Error with extension'
-        message = ('There is an error with extension "' + data['extension'] +
-                   '".\nThis message will inform you about the detail of the' +
-                   ' error :\n' + data['msg'] +
-                   '\nPlease check this problem quickly,' +
-                   ' this application may be broken.')
-      elif type == T_CUSTOM:
-        subject += 'Error ' + data['subject']
-        message = data['msg']
-      else:
-        self._logger.error('No mail message configured for this ERROR.' +
-                           ' Please contact developper')
+    def sendmail(self, subject, body):
+        """Sendmail function
 
-    if message is not None:
-      body = conf['body'].replace('\\n', '\n').format(message=message)
-      return self.sendmail(subject, body)
-    return True
+        @param[string] subject : the mail subject
+        @param[string] body : the entire body of the mail
+        """
+        conf = self.configuration
+        try:
+            if conf['ssl']:
+                conn = smtplib.SMTP_SSL(host=conf['server'],
+                                        port=conf['port'],
+                                        timeout=1)
+            else:
+                conn = smtplib.SMTP(host=conf['server'],
+                                    port=conf['port'],
+                                    timeout=1)
+        except socket_error as e:
+            self.logger.error('Unable to connect to %s:%s',
+                                    str(conf['server']), str(conf['port']))
+            return False
 
-  def sendmail(self, subject, body):
-    """Sendmail function
+        if conf['start_tls']:
+            conn.starttls()
+        if conf['auth']:
+            conn.login(conf['username'], conf['password'])
 
-    @param[string] subject : the mail subject
-    @param[string] body : the entire body of the mail
-    """
-    conf = self._config
-    try:
-      if conf['ssl'] in self.BOOL_TRUE_MAP:
-        conn = smtplib.SMTP_SSL(host=conf['server'],
-                                port=conf['port'],
-                                timeout=1)
-      else:
-        conn = smtplib.SMTP(host=conf['server'],
-                            port=conf['port'],
-                            timeout=1)
-    except socket_error as e:
-      if self._logger:
-        self._logger.error('Unable to connect to ' +
-                           conf['server'] + ':' + conf['port'])
-      return False
-
-    if conf['start_tls'] in self.BOOL_TRUE_MAP:
-      conn.starttls()
-    if conf['auth'] in self.BOOL_TRUE_MAP:
-      conn.login(conf['username'], conf['password'])
-
-    # Building mail
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = conf['sender']
-    msg['To'] = conf['recipient']
-    self._logger.info('Send mail to "' + conf['recipient'] + '"')
-    conn.sendmail(conf['sender'],
-                  conf['recipient'].split(','),
-                  msg.as_string())
-    conn.quit()
-    return True
+        # Building mail
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = conf['sender']
+        msg['To'] = conf['recipient']
+        self.logger.info('Send mail to "' + conf['recipient'] + '"')
+        conn.sendmail(conf['sender'],
+                    conf['recipient'].split(','),
+                    msg.as_string())
+        conn.quit()
+        return True
