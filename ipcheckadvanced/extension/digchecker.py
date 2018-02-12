@@ -165,7 +165,7 @@ class Extension(ExtensionBase):
             self.sendEvent(E_UPDATE, T_NORMAL, data)
         # unable to get ip from dig command
         elif ip is None:
-            self._receiver.pushEvent(E_ERROR, T_ERROR_EXTENSION, {
+            self.sendEvent(E_ERROR, T_ERROR_EXTENSION, {
                 'subject': conf.get('msg_subject'),
                 'msg': ('The digchecker extension was unable to retrieve the ' +
                     'registered IPv{version_ip} of the hostname <{hostname}> ' +
