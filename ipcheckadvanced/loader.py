@@ -204,3 +204,4 @@ class IpCheckLoader:
             except Exception as e:
                 self.__logger.error('[EXT] Extension "%s" has encounter an error: %s',
                                         ext.name, str(e))
+                self.__logger.exception(e)

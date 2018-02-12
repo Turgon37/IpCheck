@@ -137,7 +137,7 @@ class ExtensionBase:
 
     def sendEvent(self, event, type, data):
         data['extension'] = self.name
-        self.event_receiver.pushEvent(self, event, type, data)
+        self.event_receiver.pushEvent(event, type, data)
 
     def getDefaultConfig(self, override=None):
         """Return a dummy default configuration dict
