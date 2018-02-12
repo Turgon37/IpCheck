@@ -147,7 +147,7 @@ class Extension(ExtensionBase):
                     'the registered IPv{version_ip} of the hostname <{hostname}> '+
                     'from public server @{digchecker_server}'),
                 'digchecker_server': conf['server'],
-            })
+            }, data)
             return False
 
         ip = match.group('ipv' + data['version_ip'])
@@ -161,7 +161,7 @@ class Extension(ExtensionBase):
                    '\nThe looked up address is {digchecker_lookup_ip}' +
                    ' and dismatch with current IPv{version_ip} {current_ip}'),
                 'digchecker_lookup_ip': ip,
-            })
+            }, data)
             # trigger manually an new update
             self.sendEvent(E_UPDATE, T_NORMAL, data)
         # unable to get ip from dig command
@@ -171,6 +171,6 @@ class Extension(ExtensionBase):
                 'msg': ('The digchecker extension was unable to retrieve the ' +
                     'registered IPv{version_ip} of the hostname <{hostname}> ' +
                     'from public server @{digchecker_server}')
-            })
+            }, data)
             return False
         return True

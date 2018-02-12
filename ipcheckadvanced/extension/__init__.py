@@ -135,7 +135,10 @@ class ExtensionBase:
         """
         self._receiver = obj
 
-    def sendEvent(self, event, type, data):
+    def sendEvent(self, event, type, data, previous_data=None):
+        if previous_data:
+            previous_data.update(data)
+            data = previous_data
         data['extension'] = self.name
         self.event_receiver.pushEvent(event, type, data)
 
