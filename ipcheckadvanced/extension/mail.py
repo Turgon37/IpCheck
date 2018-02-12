@@ -171,7 +171,7 @@ class Extension(ExtensionBase):
         except KeyError as e:
             self.logger.error('One of your configured template use a variable not available in' +
                             ' this context : %s', str(e))
-            return False
+            body = conf['body'].replace('\\n', '\n')
         return self.sendmail(subject, body)
 
     def sendmail(self, subject, body):
