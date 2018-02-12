@@ -41,122 +41,135 @@ The configuration take theses options :
 
 
 class Extension(ExtensionBase):
-  """A simple trigger skeleton
+    """A simple trigger skeleton
 
-  You can use it as base for build your own trigger class
-  """
-
-  # match a exact ipv4 address
-  REG_E_IPV4 = '(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])'
-
-  # according to RFC 1123 define an hostname
-  REG_E_HOST = '(?:(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(?:[A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])'
-
-  # an ip address is version 4
-  REG_E_IP = '(?P<ipv4>' + REG_E_IPV4 + ')'  # IP matching
-
-  def __init__(self):
-    """(override)Default constructor:
-
-    !! Keep the call to parent constructor
-    Put here some attribut initialisation
-
-    These attributs are pre-defined by parent class
-    _logger : contain the logging object to use for logging
-    _config : the configuration dictionnary which contains all configuration
-              value
-    _receiver : the event receiver object
+    You can use it as base for build your own trigger class
     """
-    ExtensionBase.__init__(self)
-    self.__re_ip = re.compile(self.REG_E_IP)
 
-  def load(self):
-    """Load configuration from given dictionnary
+    # match a exact ipv4 address
+    REG_E_IPV4 = '(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])'
 
-    API for ipcheck module
-    The return value of this function determine if the extension must
-    be loaded or not. If this return false, the extension will not be use
-    @return [bool] :  True if load success
-                        False otherwise
-    """
-    devnull = open("/dev/null", "w")
-    if subprocess.call(['which', 'dig'],
-                       stdout=devnull,
-                       stderr=devnull) != 0:
-      self._logger.error("Need the 'dig' command. Please install it")
-      return False
-    if 'server' in self._config:
-      if re.match(self.REG_E_IPV4, self._config['server']) is None:
-        self._config['server'] = '8.8.8.8'
-    else:
-      self._config['server'] = '8.8.8.8'
+    # according to RFC 1123 define an hostname
+    REG_E_HOST = '(?:(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*(?:[A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])'
 
-    if 'hostname' in self._config:
-      if re.match(self.REG_E_HOST, self._config['hostname']) is None:
-        self._logger.error('Need a valid hostname')
-        return False
-    else:
-      self._logger.error('Need a hostname')
-      return False
+    # an ip address is version 4
+    REG_E_IP = '(?P<ipv4>' + REG_E_IPV4 + ')'  # IP matching
 
-    return True
+    RE_IPV4 = re.compile(REG_E_IPV4)
+    RE_HOST = re.compile(REG_E_HOST)
 
-  def handle(self, event, type, data):
-    """This function must implement the execution of your extension
+    def __init__(self):
+        """(override)Default constructor:
 
-    API for ipcheck module
-    The return value of this function will be looked and some log will be
-    generated if the result is False
-    This function is called each time an event happen. All event contain
-    a set of information about what happen in a python dict. They are available
-    by these key :
+        !! Keep the call to parent constructor
+        Put here some attribut initialisation
 
-    @param event [int] : the event type integer @see:Constants
-    @param type [int] : the event code whic is more precise about event
-                        @see:Constants
-    @param data [dict] : the dict which contains the key value refer to the
-                          event
-    @return [bool] :  True if execution success
-                        False otherwise
-    """
-    conf = self._config
-    if event in [E_NOUPDATE] and type == T_NORMAL:
-      out = subprocess.check_output(['dig', '+noall',
-                                            '+answer',
+        These attributs are pre-defined by parent class
+        _logger : contain the logging object to use for logging
+        _config : the configuration dictionnary which contains all configuration
+                  value
+        _receiver : the event receiver object
+        """
+        ExtensionBase.__init__(self)
+
+    def getDefaultConfig(self):
+        """Return the default configuration items for this extension
+        """
+        return super(Extension, self).getDefaultConfig({
+            'server': '8.8.8.8',
+            'msg_subject': 'IPv{version_ip} digchecker lookup',
+        })
+
+    def load(self):
+        """Load configuration from given dictionnary
+
+        API for ipcheck module
+        The return value of this function determine if the extension must
+        be loaded or not. If this return false, the extension will not be use
+        @return [bool] :  True if load success
+                            False otherwise
+        """
+        with open("/dev/null", "w") as devnull:
+            try:
+                subprocess.call(['which', 'dig'],
+                                    stdout=devnull,
+                                    stderr=devnull)
+            except subprocess.CalledProcessError:
+                self.logger.error("Need the 'dig' command. Please install it")
+                return False
+
+        config = self.getDefaultConfig()
+        config.update(self.configuration)
+        if 'server' in config and self.RE_IPV4.match(config['server']) is None:
+            config['server'] = '8.8.8.8'
+
+        if 'hostname' in config:
+            if self.RE_HOST.match(config['hostname']) is None:
+                self._logger.error('Need a valid hostname')
+                return False
+        else:
+            self._logger.error('Need a hostname')
+            return False
+
+        self.configuration = config
+        return True
+
+    def handle(self, event, type, data):
+        """This function must implement the execution of your extension
+
+        API for ipcheck module
+        The return value of this function will be looked and some log will be
+        generated if the result is False
+        This function is called each time an event happen. All event contain
+        a set of information about what happen in a python dict. They are available
+        by these key :
+
+        @param event [int] : the event type integer @see:Constants
+        @param type [int] : the event code whic is more precise about event
+                            @see:Constants
+        @param data [dict] : the dict which contains the key value refer to the
+                              event
+        @return [bool] :  True if execution success
+                            False otherwise
+        """
+        conf = self.configuration
+        if event not in [E_NOUPDATE] or type != T_NORMAL:
+            return True
+
+        out = subprocess.check_output(['dig', '+noall', '+answer',
                                             '@' + conf['server'],
-                                            conf['hostname']
-                                     ])
-      match = self.__re_ip.search(out.decode())
-      if match is None:
-        self._receiver.pushEvent(E_ERROR, T_ERROR_EXTENSION, {
-            'subject': 'IPv' + data['version_ip'] + ' lookup',
-            'msg': 'The digchecker extension was unable to retrieve' +
-            ' the registered IPv' + data['version_ip'] + ' of the hostname <' +
-            conf['hostname'] + '> from publid server @' + conf['server']
-        })
-        return False
+                                            conf['hostname'] ])
+        match = self.RE_IPV4.search(out.decode())
+        if match is None:
+            self.sendEvent(E_ERROR, T_ERROR_EXTENSION, {
+                'subject': conf.get('msg_subject'),
+                'msg': ('The digchecker extension was unable to retrieve ' +
+                    'the registered IPv{version_ip} of the hostname <{hostname}> '+
+                    'from public server @{digchecker_server}'),
+                'digchecker_server': conf['server'],
+            })
+            return False
 
-      ip = match.group('ipv' + data['version_ip'])
-      # error between current ip and dns registered ip
-      if ip is not None and ip != data['current_ip']:
-        self._logger.error('Extension "' + self.getName() +
-                           '" detect an invalid lookup ip')
-        self._receiver.pushEvent(E_ERROR, T_CUSTOM, {
-            'subject': 'IPv' + data['version_ip'] + ' lookup',
-            'msg': 'An error appear with IPv' + data['version_ip'] +
-                   ' address lookup.' +
-                   '\nThe looked up dns address is (' + ip + ')' +
-                   ' and dismatch with current IPv' + data['version_ip'] +
-                   ' (' + data['current_ip'] + ')'
-        })
-        self._receiver.pushEvent(E_UPDATE, T_NORMAL, data)
-      # unable to get ip from dig command
-      elif ip is None:
-        self._receiver.pushEvent(E_ERROR, T_ERROR_EXTENSION, {
-            'subject': 'IPv' + data['version_ip'] + ' lookup',
-            'msg': 'The digchecker extension was unable to retrieve' +
-            ' the registered IPv' + data['version_ip'] + ' of the hostname <' +
-            conf['hostname'] + '> from publid server @' + conf['server']
-        })
-        return False
-    return True
+        ip = match.group('ipv' + data['version_ip'])
+        # error between current ip and dns registered ip
+        if ip and ip != data['current_ip']:
+            self.logger.error('Inconsistency detected between local ip and lookup ip')
+            self.sendEvent(E_ERROR, T_CUSTOM, {
+                'subject': conf.get('msg_subject'),
+                'msg': ('An error appear with IPv{version_ip} address lookup.' +
+                   '\nThe looked up address is {digchecker_lookup_ip} ' +
+                   ' and dismatch with current IPv{version_ip} {current_ip}'),
+                'digchecker_lookup_ip': ip,
+            })
+            # trigger manually an new update
+            self.sendEvent(E_UPDATE, T_NORMAL, data)
+        # unable to get ip from dig command
+        elif ip is None:
+            self._receiver.pushEvent(E_ERROR, T_ERROR_EXTENSION, {
+                'subject': conf.get('msg_subject'),
+                'msg': ('The digchecker extension was unable to retrieve the ' +
+                    'registered IPv{version_ip} of the hostname <{hostname}> ' +
+                    'from public server @{digchecker_server}')
+            })
+            return False
+        return True

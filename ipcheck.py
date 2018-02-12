@@ -127,7 +127,7 @@ class IpCheck:
         # init logger
         self.__logger = logging.getLogger('ipcheck')
         self.__logger.setLevel(logging.DEBUG)
-        out_formatter = logging.Formatter("[%(name)s] %(levelname)s : %(message)s")
+        out_formatter = logging.Formatter("%(levelname)s [%(name)s] : %(message)s")
         # register stdout handler
         self.__logger_stdout = logging.StreamHandler(sys.stdout)
         self.__logger_stdout.setFormatter(out_formatter)
@@ -141,7 +141,7 @@ class IpCheck:
         # init advanced interface
         self.loader = None
         if ipcheckadvanced is not None and isinstance(ipcheckadvanced, types.ModuleType):
-            self.loader = ipcheckadvanced.IpCheckLoader(self.__logger)
+            self.loader = ipcheckadvanced.IpCheckLoader(self.__logger, __version__)
 
     def configure(self, **options):
         """Parse input main program options (restrict to program strict execution)
