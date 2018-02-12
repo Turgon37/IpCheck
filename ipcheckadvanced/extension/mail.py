@@ -162,16 +162,15 @@ class Extension(ExtensionBase):
             return True
 
         data.update(conf)
+        subject = (conf.get('subject') + conf.get('subject_'+key))
+        body = conf['body'].replace('\\n', '\n')
         try:
-            subject = (conf.get('subject') + conf.get('subject_'+key)).format(**data)
+            subject = subject.format(**data)
             message = conf.get('message_'+key).format(**data)
-            body = (conf['body'].replace('\\n', '\n')
-                        .format(message=message, **data)
-                        .format(**data))
+            body = body.format(message=message, **data).format(**data))
         except KeyError as e:
-            self.logger.error('One of your configured template use a variable not available in' +
-                            ' this context : %s', str(e))
-            body = conf['body'].replace('\\n', '\n')
+            self.logger.error('One of your template use a variable that is ' +
+                                'not available in this context : %s', str(e))
         return self.sendmail(subject, body)
 
     def sendmail(self, subject, body):
