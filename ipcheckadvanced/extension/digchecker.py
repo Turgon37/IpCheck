@@ -55,7 +55,7 @@ class Extension(ExtensionBase):
     # an ip address is version 4
     REG_E_IP = '(?P<ipv4>' + REG_E_IPV4 + ')'  # IP matching
 
-    RE_IPV4 = re.compile(REG_E_IPV4)
+    RE_IP = re.compile(REG_E_IP)
     RE_HOST = re.compile(REG_E_HOST)
 
     def __init__(self):
@@ -139,7 +139,7 @@ class Extension(ExtensionBase):
         out = subprocess.check_output(['dig', '+noall', '+answer',
                                             '@' + conf['server'],
                                             conf['hostname'] ])
-        match = self.RE_IPV4.search(out.decode())
+        match = self.RE_IP.search(out.decode())
         if match is None:
             self.sendEvent(E_ERROR, T_ERROR_EXTENSION, {
                 'subject': conf.get('msg_subject'),
