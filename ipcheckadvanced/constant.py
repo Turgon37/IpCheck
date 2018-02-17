@@ -30,20 +30,20 @@ Use these keyword to give event code and event type
 
 # Here are the event enumeration
 g_cstt_event = [
-    'E_BEFORE_CHECK',  # empty event for trigge before update
-    'E_AFTER_CHECK',  # empty event for trigger after update
-    'E_START',  # it's the first time the script is run
-    'E_UPDATE',  # the Ip address value have changed
-    'E_NOUPDATE',  # Nothing update
+    'E_BEFORE_CHECK',  # empty event raised before update
+    'E_AFTER_CHECK',  # empty event raised after update
+    'E_START',  # it's the first time the script is run, no previous ip
+    'E_UPDATE',  # the Ip address value have changed from last check
+    'E_NOUPDATE',  # the ip address is the same as from last check
     'E_ERROR'  # an error appear see type for detail
 ]
 # here are the ERROR type enumeration
 g_cstt_type = [
     'T_NORMAL',  # no error
     'T_CUSTOM',  # custom error must be described in the 'msg' data
-    'T_ERROR_FILE',  # unable to read previous ip from local file
-    'T_ERROR_NOIP',  # unable to retrieve ip from internet
-    'T_ERROR_PERMS',  # unable to properly access to file system
+    'T_ERROR_NOIP_URLS',  # unable to retrieve ip from internet
+    'T_ERROR_NOIP_FILE',  # unable to read previous ip from local file
+    'T_ERROR_FILE',  # unable to properly access to file system
     'T_ERROR_EXTENSION'  # error occurs during extension execution
 ]
 

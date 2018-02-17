@@ -62,7 +62,17 @@ if ipcheckadvanced is not None:
     from ipcheckadvanced.constant import *
 
 # Global project declarations
-__version__ = '3.1.0'
+__version__ = '4.0.0'
+
+
+class IpCheckUrlIpException(BaseException):
+    pass
+
+class IpCheckFileException(BaseException):
+    pass
+
+class IpCheckFileIpException(BaseException):
+    pass
 
 
 class IpCheck:
@@ -140,7 +150,7 @@ class IpCheck:
         self.__logger.addHandler(self.__logger_stderr)
         # init advanced interface
         self.loader = None
-        if ipcheckadvanced is not None and isinstance(ipcheckadvanced, types.ModuleType):
+        if ipcheckadvanced and isinstance(ipcheckadvanced, types.ModuleType):
             self.loader = ipcheckadvanced.IpCheckLoader(self.__logger, __version__)
 
     def configure(self, **options):
@@ -202,26 +212,34 @@ class IpCheck:
                 os.mkdir(self.__tmp_directory)
             except:
                 self.__logger.error('Unable to create the required directory %s', self.__tmp_directory)
-                return 2
+                return 1
         if self.loader.load():
             self.__logger.debug('advanced IPCheck features module successfully loaded')
         else:
             self.__logger.debug('unable to load advanced IPCheck features module')
 
-        return self.update() != 0
+        success = 0
+        # lookup for ip version
+        # try to run for each ip version but keep
+        # the last failed state
+        for ip_version in self.__ip_versions:
+            if not self.checkAndUpdateIp(ip_version):
+                success = 1
+        return success
 
-    def addUrl(self, url, ip_version=4):
+    def addUrl(self, url, ip_version):
         """Entry point for push url to available url list
 
         @param[string] url : the string that correspond to an entire url
                                     a list of string that describe several urls
-        @return[integer] : True if add success
+        @param[int] ip_version : the version of ip protocol
+        @return[boolean] : True if add success
                           False url format error
         """
         # remove trailing white space
         url = url.strip()
         match = self.RE_URL.match(url)
-        if match is None:
+        if not match:
             self.__logger.error('Invalid url for IPv%d "%s", not added', ip_version, url)
             return False
 
@@ -233,120 +251,114 @@ class IpCheck:
             self.__logger.debug('url already exists for IPv%d: %s', ip_version, str(d))
         return True
 
-    def update(self):
+    def checkAndUpdateIp(self, ip_version):
         """Retrieve the current ip address and compare it to previous one
 
-        This function retrieve the current ip(s)
+        This function retrieve the current ip(s) and generate
+        event according to the result
+        @param[int] ip_version : the version of ip protocol
         @return[boolean] The update status
-                          True if update have been performed
-                          False if not
+                          True if processing have been successful
+                          False if any error occurs
         """
+        status = None
+
         # store return error number
-        ret = 0
-        if ipcheckadvanced is not None:
+        if ipcheckadvanced:
             # @event : BEFORE_CHECK
-            self.sendEvent(E_BEFORE_CHECK, T_NORMAL)
+            self.sendEvent(E_BEFORE_CHECK, T_NORMAL, {
+                'version_ip': ip_version,
+            })
 
-        # lookup for ip version
-        for version in self.__ip_versions:
-            # RETRIEVING IP
-            current_ip = self.retrieveIp(protocol_version=version)
-            if current_ip is None:
-                self.__logger.error('Unable to get current IPv%d address', version)
-                ret += 1
-                if ipcheckadvanced is not None:
-                    # @event : ERROR_NOIP = no ip found
-                    self.sendEvent(E_ERROR, T_ERROR_NOIP, {
-                        'version_ip': version,
+        # RETRIEVING IP
+        try:
+            current_ip = self.fetchCurrentIp(ip_version)
+        except IpCheckUrlIpException as e:
+            status = False
+            if ipcheckadvanced:
+                # @event : ERROR_NOIP = no ip found
+                self.sendEvent(E_ERROR, T_ERROR_NOIP_URLS, {
+                    'version_ip': ip_version,
+                    'error': str(e),
+                })
+
+        try:
+            previous_ip = self.readIpFromLocalFile(ip_version)
+        except IpCheckFileException as e:
+            status = False
+            if ipcheckadvanced:
+                # @event : ERROR_FILE = bad ip from local file
+                self.sendEvent(E_ERROR, T_ERROR_FILE, {
+                    'version_ip': ip_version,
+                    'error': str(e),
+                })
+        except IpCheckFileIpException as e:
+            status = False
+            if ipcheckadvanced:
+                self.sendEvent(E_ERROR, T_ERROR_NOIP_FILE, {
+                    'version_ip': ip_version,
+                    'error': str(e),
+                })
+
+        if status is False:
+            self.sendEvent(E_AFTER_CHECK, T_NORMAL, {
+                'version_ip': ip_version,
+                'status': status,
+            })
+            return status
+
+        assert current_ip
+        # PREVIOUS IP EXISTS
+        if previous_ip:
+            # IPS MATCH
+            if current_ip == previous_ip:
+                self.__logger.info('IPv%d unchanged', ip_version)
+                if ipcheckadvanced:
+                    # @event : NOUPDATE
+                    self.sendEvent(E_NOUPDATE, T_NORMAL, {
+                        'version_ip': ip_version,
+                        'current_ip': current_ip,
+                        'previous_ip': previous_ip,
                     })
-                continue
-
-            path = os.path.join(self.__tmp_directory, self.__file_pattern.format(ip_version=version))
-            # FILE EXIST + READABLE => check file and compare previous address
-            if os.path.isfile(path) and os.access(path, os.R_OK):
-                previous_ip = self.readFromFile(path, version)
-
-                # error in temporary file
-                if previous_ip is None:
-                    self.__logger.warn('incorrect address read from local file')
-                    if ipcheckadvanced is not None:
-                        # @event : ERROR_FILE = bad ip from local file
-                        self.sendEvent(E_ERROR, T_ERROR_FILE, {
-                            'version_ip': version,
-                            'file': path,
-                        })
-                    # IF FILE WRITABLE
-                    if os.access(path, os.W_OK):
-                        self.__logger.debug('writing directly the current IPv%d address', version)
-                        self.writeToFile(current_ip, path)
-                    else:
-                        self.__logger.error('unsufficient permissions on file system')
-                        ret += 1
-                        if ipcheckadvanced is not None:
-                            # @event : ERROR_FILE = bad ip from local file
-                            self.sendEvent(E_ERROR, T_ERROR_PERMS, {
-                                'version_ip': version,
-                                'file': path,
-                            })
-                    continue
-
-                # IPS MATCH
-                if current_ip == previous_ip:
-                    self.__logger.info('IPv%d unchanged', version)
-                    if ipcheckadvanced is not None:
-                        # @event : NOUPDATE
-                        self.sendEvent(E_NOUPDATE, T_NORMAL, {
-                            'version_ip': version,
-                            'current_ip': current_ip,
-                            'previous_ip': previous_ip,
-                        })
-                # IPS MISMATCH
-                else:
-                    self.writeToFile(current_ip, path)
-                    self.__logger.info('New IPv%d %s', version, current_ip)
-                    # call user defined command
-                    self.callCommand()
-                    if ipcheckadvanced is not None:
-                        # @event : UPDATE
-                        self.sendEvent(E_UPDATE, T_NORMAL, {
-                            'version_ip': version,
-                            'current_ip': current_ip,
-                            'previous_ip': previous_ip,
-                        })
-
-            # FILE NOT EXIST + DIRECTORY WRITABLE =>
-            #                        just create file and write address into
-            elif not os.path.isfile(path) and os.access(self.__tmp_directory, os.W_OK):
-                self.writeToFile(current_ip, path)
-                self.__logger.info('Starting with IPv%d %s', version, current_ip)
+                status = True
+            # IPS MISMATCH
+            else:
+                self.writeIpToLocalFile(ip_version, current_ip)
+                self.__logger.info('New IPv%d %s', ip_version, current_ip)
                 # call user defined command
                 self.callCommand()
-                if ipcheckadvanced is not None:
-                    # @event : START
-                    self.sendEvent(E_START, T_NORMAL, {
-                        'version_ip': version,
+                if ipcheckadvanced:
+                    # @event : UPDATE
+                    self.sendEvent(E_UPDATE, T_NORMAL, {
+                        'version_ip': ip_version,
                         'current_ip': current_ip,
+                        'previous_ip': previous_ip,
                     })
-            # NO SUFFICIENT PERMISSIONS
-            else:
-                self.__logger.error('unsufficient permissions on file system')
-                ret += 1
-                if ipcheckadvanced is not None:
-                    # @event : ERROR = read/write right
-                    self.sendEvent(E_ERROR, T_ERROR_PERMS, {
-                        'version_ip': version,
-                        'file': path,
-                    })
-                continue
+                status = True
 
-        if ipcheckadvanced is not None:
+        # NO PREVIOUS IP FILE
+        else:
+            status = True
+            self.writeIpToLocalFile(ip_version, current_ip)
+            self.__logger.info('Starting with IPv%d %s', ip_version, current_ip)
+            # call user defined command
+            self.callCommand()
+            if ipcheckadvanced:
+                # @event : START
+                self.sendEvent(E_START, T_NORMAL, {
+                    'version_ip': ip_version,
+                    'current_ip': current_ip,
+                })
+
+        if ipcheckadvanced:
             # @event : AFTER CHECK
             self.sendEvent(E_AFTER_CHECK, T_NORMAL, {
-                'status': ret == 0,
+                'version_ip': ip_version,
+                'status': status,
             })
-        return ret
+        return status
 
-    def retrieveIp(self, protocol_version=4):
+    def fetchCurrentIp(self, protocol_version):
         """Execute the HTTP[S] query to retrieve IP address
 
         This function make a query for each url registered
@@ -438,61 +450,97 @@ class IpCheck:
                 ip = match.group('ipv' + str(protocol_version))
                 self.__logger.debug('  => get IPv%d address %s', protocol_version, ip)
                 return ip
-        self.__logger.error('Cannot obtains current address from any of the given urls')
-        return None
 
-    def writeToFile(self, ip, path):
-        """Write content (address) to the specified file
+        self.__logger.error('Unable to get current IPv%d address', protocol_version)
+        raise IpCheckUrlIpException('Cannot obtains current address from any of the given urls')
 
-        @param content [str] : the content to write in the file
-        @param file [str] : the file path
-        @return [bool] True if write success
-                        False otherwise
-        """
-        try:
-            with open(path, 'w') as f:
-                f.write(ip)
-        except IOError as e:
-            self.__logger.error('Error happened during writing ip to file : %s', str(e))
-            return False
-        self.__logger.debug('wrote ip address %s to %s', ip, path)
-        return True
-
-    def readFromFile(self, path, protocol_version=4):
+    def readIpFromLocalFile(self, protocol_version):
         """Read the content of specified file and search for ip address
 
-        @param file [str] : the file path
-        @param vers [int] : the ip version
+        @param protocol_version [int] : the ip version
         @return [str] The address string
                [None]    if no address can be found
+        @raise IpCheckFileException on file errors
+        @raise IpCheckFileIpException on ip format error
         """
+        path = os.path.join(self.__tmp_directory,
+                            self.__file_pattern.format(ip_version=protocol_version))
+
+        # FILE DO NOT EXISTS => not previous ip
+        if not os.path.exists(path):
+            return None
+
+        # FILE EXIST BUT NOT A REGULAR FILE
+        if not os.path.isfile(path):
+            raise IpCheckFileException('The local path {} is not a regular file'.format(path))
+
+        # FILE EXIST + NOT READABLE
+        if not os.access(path, os.R_OK):
+            raise IpCheckFileException('Unsufficient permissions on file system to access {}'.format(path))
+
         try:
+            self.__logger.debug('reading ip address from %s', path)
             with open(path, 'r') as f:
                 # read more at 45 bytes (caracters) from file because
                 # ipv6 take more at 45 byte to be ascii encoded
-                data = f.read(45)
+                data = f.read(45).strip()
+            self.__logger.debug('read data "%s" from %s', data, path)
         except IOError as e:
-            self.__logger.error(str(e))
-            return None
+            raise IpCheckFileException('Error during file read : {}'.format(str(e)))
+
         # check read ip format
         match = self.RE_IP.search(data)
-        if match:
-            ip = match.group('ipv' + str(protocol_version))
-            self.__logger.debug('read ip address %s from %s', ip, path)
-            return ip
-        return None
+        if not match:
+            raise IpCheckFileIpException('Error not ip address found in local file : {}'.format(path))
+
+        ip = match.group('ipv' + str(protocol_version))
+        self.__logger.debug('read ip address %s from %s', ip, path)
+        return ip
+
+    def writeIpToLocalFile(self, protocol_version, ip):
+        """Write content (address) to the specified file
+
+        @param protocol_version [int] : the ip version
+        @param ip [str] : the content to write in the file
+        @return [bool] True if write success
+                        False otherwise
+        """
+        file_path = os.path.join(self.__tmp_directory,
+                            self.__file_pattern.format(ip_version=protocol_version))
+        directory_path = os.path.dirname(file_path)
+
+        # DIRECTORY DOES NOT EXIST
+        if not os.path.exists(directory_path):
+            raise IpCheckFileException('The local directory does not exists {}'.format(directory_path))
+
+        # DIRECTORY EXIST + NOT WRITABLE
+        if not os.access(directory_path, os.W_OK):
+            raise IpCheckFileException('Unsufficient permissions on file system to access {}'.format(directory_path))
+
+        try:
+            self.__logger.debug('writing ip address "%s" to %s', ip, file_path)
+            with open(file_path, 'w') as f:
+                f.write(ip)
+            self.__logger.debug('wrote ip address "%s" to %s', ip, file_path)
+        except IOError as e:
+            raise IpCheckFileException('Error happened during writing ip to local file : {}'.format(str(e)))
+
+        return True
 
     def callCommand(self):
         """Call the given command
 
         This function call the command given by parameter (if available)
         """
-        if self.__command:
-            self.__logger.debug('call user command `%s`', str(self.__command))
-            if subprocess.call(self.command, timeout=10) == 0:
-                self.__logger.info('User\'s command has return success')
-            else:
-                self.__logger.warning('User\'s command has returned non-zero value')
+        if not self.__command:
+            return True
+
+        self.__logger.debug('call user command `%s`', str(self.__command))
+        if subprocess.call(self.__command, timeout=10) == 0:
+            self.__logger.info('Command has return success')
+            return True
+        self.__logger.warning('Command has returned non-zero value')
+        return False
 
     def sendEvent(self, event, type, data=dict()):
         """Build a new event and call associated action
