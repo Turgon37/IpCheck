@@ -52,6 +52,6 @@ __all__ = g_cstt_event + g_cstt_type
 # Load each constant with a incremented integer because we don't care about values
 cstt_value = 1
 for cstt in __all__:
-  globals()[cstt] = cstt_value
-  cstt_value += 1
+    globals()[cstt] = cstt_value
+    cstt_value += 1
 del cstt_value
