@@ -1,13 +1,22 @@
 # -*- coding: utf8 -*-
 
 import logging
+import shlex
 import shutil
+import subprocess
 from unittest.mock import patch
 
 from connexionmock import ConnexionMock
 
 import ipcheck
 
+
+# command line test
+def test_cmdline():
+    """Must produce an error is no url was given"""
+    result = subprocess.Popen(shlex.split('./ipcheck.py --help'), stdout=subprocess.PIPE)
+    stdout, stderr = result.communicate()
+    assert 'IpCheck version' in stdout.decode()
 
 # URL settings
 def test_without_url():
