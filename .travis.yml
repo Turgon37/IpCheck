@@ -10,7 +10,7 @@ install:
 #  - python setup.py install
 
 script:
-  - python -m pytest  --cov=./ --capture=sys tests/ --verbose
+  - python -m pytest --verbose --cov=./ --capture=sys tests/
 
 after_success:
   - codecov
