@@ -33,6 +33,7 @@ import http.client
 import logging
 import os
 import re
+import shlex
 import socket
 import ssl
 import subprocess
@@ -368,7 +369,8 @@ class IpCheck:
                     })
             self.__logger.info('Starting with IPv%d %s', ip_version, current_ip)
             # call user defined command
-            self.callCommand()
+            if not self.callCommand():
+                status = False
             if ipcheckadvanced:
                 # @event : START
                 self.sendEvent(E_START, T_NORMAL, {
@@ -568,10 +570,28 @@ class IpCheck:
             return True
 
         self.__logger.debug('call user command `%s`', str(self.__command))
-        if subprocess.call(self.__command, timeout=10) == 0:
+        command_args = shlex.split(self.__command)
+        try:
+            result = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = result.communicate()
+        except FileNotFoundError:
+            self.__logger.error('Command executable "%s" does not exists', str(command_args[0]))
+            return False
+
+        # outputs
+        if len(stderr):
+            self.__logger.debug('command output %s', stdout.decode())
+        else:
+            self.__logger.debug('command has not produced any output')
+        if len(stderr):
+            self.__logger.debug('command error output %s', stderr.decode())
+        else:
+            self.__logger.debug('command has not produced any error output')
+
+        if result.returncode == 0:
             self.__logger.info('Command has return success')
             return True
-        self.__logger.warning('Command has returned non-zero value')
+        self.__logger.error('Command has returned non-zero value')
         return False
 
     def sendEvent(self, event, type, data=dict()):
