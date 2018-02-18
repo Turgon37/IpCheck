@@ -1,5 +1,8 @@
 # IpCheck - Ip address Checker script
 
+[![Build Status](https://travis-ci.org/Turgon37/IpCheck.svg?branch=master)](https://travis-ci.org/Turgon37/IpCheck)
+[![codecov](https://codecov.io/gh/Turgon37/IpCheck/branch/master/graph/badge.svg)](https://codecov.io/gh/Turgon37/IpCheck)
+
 This script must be run regularly (with tools like crontab), it check regularly your external (public) ip address and keep it up to date in a local file world readable. In addition to this, it perform some trigger action on IP update, like command execution and mail notification (see below advanced configuration)
 
 ---
