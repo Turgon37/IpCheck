@@ -7,16 +7,11 @@ python:
   - 3.6
   - 3.7-dev
 
-before_install:
-  - echo "running under $TRAVIS_PYTHON_VERSION"
-  # Install Python packages / dependencies
-  #   coverage
-  #- travis_retry pip install coverage
-  #   coveralls
-  #- travis_retry pip install coveralls codecov
+install:
+  - pip install pytest pytest-cov codecov
 
-#script:
-#  - coverage run --source [myPackage] setup.py test
+script:
+  - python -m pytest  --cov=./ --capture=sys tests/ --verbose
 
-#after_success:
-#  coveralls
+after_success:
+  - codecov
