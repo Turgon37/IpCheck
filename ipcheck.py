@@ -215,7 +215,7 @@ class IpCheck:
         # check local file system working elements
         if not os.path.isdir(self.__tmp_directory):
             try:
-                os.mkdir(self.__tmp_directory)
+                os.makedirs(self.__tmp_directory)
             except:
                 self.__logger.error('Unable to create the required directory %s', self.__tmp_directory)
                 return 1

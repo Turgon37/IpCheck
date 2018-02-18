@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 
 from unittest.mock import patch
-
+import shutil
 
 from connexionmock import ConnexionMock
 
@@ -24,6 +24,18 @@ def test_with_bad_urls():
     program = ipcheck.IpCheck()
     program.configure(urls_v6=['http://lmdaz'])
     assert program.main() == 3
+
+@patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0'))
+def test_with_duplicate_url(http_mock, capsys):
+    """The url must be fetched only once"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
+    program = ipcheck.IpCheck()
+    program.configure(verbose=1, urls_v4=['http://0.0.0.0/', 'http://0.0.0.0/'], tmp_directory='tmp/')
+    assert program.main() == 0
+    out, err = capsys.readouterr()
+    assert 'url already exists' in out
+    assert out.count('query url http://0.0.0.0/') == 1
 
 # TMP DIRECTORY settings
 def test_with_bad_tmp_directory_path_in_stdout(capsys):
@@ -50,36 +62,42 @@ def test_with_bad_tmp_directory_path_in_stderr(capsys):
 @patch('http.client.HTTPSConnection', return_value=ConnexionMock('0.0.0.0'))
 def test_valid_address_from_url(http_mock, https_mock, capsys):
     """Fetch a valid IP address from urls"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
     # http
     program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp1/')
+    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/1/')
     assert program.main() == 0
 
     # https
     program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp2/')
+    program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp/2/')
     assert program.main() == 0
 
 @patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.'))
 @patch('http.client.HTTPSConnection', return_value=ConnexionMock('0.0.0.'))
 def test_invalid_address_from_url(http_mock, https_mock, capsys):
     """Fetch an invalid IP address from urls, must generate an error"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
     # http
     program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp3/')
+    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/1')
     assert program.main() == 1
 
     # https
     program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp4/')
+    program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp/2')
     assert program.main() == 1
 
 # Command hook
 @patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0'))
 def test_run_command_with_success(http_mock, capsys):
     """Fetch a valid IP address from urls"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
     program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp5/',
+    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/1',
                         command='/bin/true')
     assert program.main() == 0
 
@@ -87,13 +105,15 @@ def test_run_command_with_success(http_mock, capsys):
 @patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0'))
 def test_run_command_with_failure(http_mock, capsys):
     """Fetch a valid IP address from urls"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
     # http
     program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp6/',
+    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/1',
                         command='/bin/false')
     assert program.main() == 1
 
     program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp7/',
+    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/2',
                         command='/bin/nonexistent')
     assert program.main() == 1
