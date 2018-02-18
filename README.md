@@ -55,7 +55,7 @@ If you want to use advanced features check that you have fill the configuration 
 
 ##### Requires:
   - python version
-    * python >= 3.2
+    * python >= 3.4
 
 ### Example with a DYN Host update
 
