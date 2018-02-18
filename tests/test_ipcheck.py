@@ -35,6 +35,16 @@ def test_with_good_url(http_mock):
     program.configure(urls_v4='localhost/', tmp_directory='tmp')
     assert program.main() == 0
 
+@patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0'))
+def test_with_good_url_and_port(http_mock):
+    """Must produce an error is bad urls were given"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
+    # http
+    program = ipcheck.IpCheck()
+    program.configure(urls_v4='localhost:81/', tmp_directory='tmp/1')
+    assert program.main() == 0
+
 def test_with_bad_urls():
     """Must produce an error is bad urls were given"""
     # ipv4
