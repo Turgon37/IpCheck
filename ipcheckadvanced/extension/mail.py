@@ -155,7 +155,7 @@ class Extension(ExtensionBase):
             # IP checker has encounter an error
             if type == T_ERROR_FILE:
                 key = 'on_error_file'
-            elif type == T_ERROR_PERMS:
+            elif type == T_ERROR_NOIP_FILE:
                 key = 'on_error_perms'
             elif type == T_ERROR_EXTENSION:
                 key = 'on_error_extension'
