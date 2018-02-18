@@ -1,7 +1,8 @@
 # -*- coding: utf8 -*-
 
-from unittest.mock import patch
+import logging
 import shutil
+from unittest.mock import patch
 
 from connexionmock import ConnexionMock
 
@@ -13,6 +14,26 @@ def test_without_url():
     """Must produce an error is no url was given"""
     program = ipcheck.IpCheck()
     assert program.main() == 3
+
+@patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0'))
+def test_with_good_urls(http_mock):
+    """Must produce an error is bad urls were given"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
+    # list
+    program = ipcheck.IpCheck()
+    program.configure(urls_v4=['localhost/'], tmp_directory='tmp/1')
+    assert program.main() == 0
+
+@patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0'))
+def test_with_good_url(http_mock):
+    """Must produce an error is bad urls were given"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
+    # string
+    program = ipcheck.IpCheck()
+    program.configure(urls_v4='localhost/', tmp_directory='tmp')
+    assert program.main() == 0
 
 def test_with_bad_urls():
     """Must produce an error is bad urls were given"""
