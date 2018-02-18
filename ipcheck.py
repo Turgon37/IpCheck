@@ -137,6 +137,11 @@ class IpCheck:
         # init logger
         self.__logger = logging.getLogger('ipcheck')
         self.__logger.setLevel(logging.DEBUG)
+
+        # remove all previously defined handlers
+        for handler in self.__logger.handlers:
+            self.__logger.removeHandler(handler)
+        # default format for all handlers
         out_formatter = logging.Formatter("%(levelname)s [%(name)s] : %(message)s")
         # register stdout handler
         self.__logger_stdout = logging.StreamHandler(sys.stdout)
@@ -198,7 +203,7 @@ class IpCheck:
             else:
                 self.__logger.debug('unable to configure advanced IPCheck features module')
 
-    def start(self):
+    def main(self):
         """Entry point of the program
         """
         for ip_version in self.__ip_versions:
@@ -218,14 +223,16 @@ class IpCheck:
         else:
             self.__logger.debug('unable to load advanced IPCheck features module')
 
-        success = 0
+        return_code = 0
         # lookup for ip version
         # try to run for each ip version but keep
         # the last failed state
         for ip_version in self.__ip_versions:
             if not self.checkAndUpdateIp(ip_version):
-                success = 1
-        return success
+                return_code = 1
+        # close logs
+        logging.shutdown()
+        return return_code
 
     def addUrl(self, url, ip_version):
         """Entry point for push url to available url list
@@ -411,8 +418,8 @@ class IpCheck:
                 else:
                     context = None
                 conn = http.client.HTTPSConnection(host, port,
-                                               timeout=self.__timeout,
-                                               context=context)
+                                                    timeout=self.__timeout,
+                                                    context=context)
             else:
                 self.__logger.error('Found unmanaged url protocol : "%s" ignoring url', url_parts['proto'])
                 continue
@@ -423,7 +430,7 @@ class IpCheck:
             headers = {'User-Agent': 'ipcheck/' + __version__}
             # authentification
             if url_parts['user'] and url_parts['pass']:
-                self.__logger.debug('  -> authentication enable')
+                self.__logger.debug('  -> authentication enabled')
                 # build the auth string
                 auth_str = url_parts['user'] + ':' + url_parts['pass']
                 # encode it as a base64 string to put in http header
@@ -442,6 +449,7 @@ class IpCheck:
                 conn.request('GET', url, headers=headers)
                 res = conn.getresponse()
                 data = res.read().decode()
+                self.__logger.debug('  => fetch data "%s"', str(data))
                 conn.close()
             except socket.gaierror as e:
                 self.__logger.debug('  => unable to resolve hostname %s', str(e))
@@ -462,6 +470,7 @@ class IpCheck:
 
             if res.status == 401:
                 self.__logger.debug('  => the server may require an authentification')
+                self.__logger.warning('The server at url "%s" may require an authentification', url)
                 continue
 
             # lookup for ip matching
@@ -470,6 +479,8 @@ class IpCheck:
                 ip = match.group('ipv' + str(protocol_version))
                 self.__logger.debug('  => get IPv%d address %s', protocol_version, ip)
                 return ip
+            else:
+                self.__logger.debug('  => data does not match valid IPv%d address', protocol_version)
 
         self.__logger.error('Unable to get current IPv%d address', protocol_version)
         raise IpCheckUrlIpException('Cannot obtains current address from any of the given urls')
@@ -609,7 +620,7 @@ in a local file""")
     parser.add_argument('-V', '--version', action='store_true', dest='show_version', default=False,
                             help='Print the version and exit')
     # Load advanced parameters
-    if ipcheckadvanced is not None:
+    if ipcheckadvanced:
         ipcheckadvanced.configureArgParser(parser)
     args = parser.parse_args()
 
@@ -619,7 +630,7 @@ in a local file""")
 
     program = IpCheck()
     program.configure(**vars(args))
-    sys.exit(program.start())
+    sys.exit(program.main())
 
 # Return code :
 #     0 Success
