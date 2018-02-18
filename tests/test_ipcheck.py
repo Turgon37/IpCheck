@@ -18,6 +18,10 @@ def test_cmdline():
     stdout, stderr = result.communicate()
     assert 'IpCheck version' in stdout.decode()
 
+    result = subprocess.Popen(shlex.split('./ipcheck.py --url-v4 "localhost/"'), stdout=subprocess.PIPE)
+    stdout, stderr = result.communicate()
+    assert result.returncode == 1
+
 # URL settings
 def test_without_url():
     """Must produce an error is no url was given"""
