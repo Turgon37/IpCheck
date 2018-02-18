@@ -2,7 +2,7 @@
 
 # This file is a part of ipcheck
 #
-# Copyright (c) 2015 Pierre GINDRAUD
+# Copyright (c) 2015-2018 Pierre GINDRAUD
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -91,8 +91,6 @@ class IpCheckLoader:
         """
         urls = []
         url = self.cp.get(self.CORE_SECTION, 'url_v'+str(ip_version), fallback='')
-        if ip_version == 4:
-            url += ',' + self.cp.get(self.CORE_SECTION, 'url', fallback='')
         for u in filter(lambda s: len(s), map(lambda x: x.strip(), url.split(','))):
             urls.append(u)
         return urls
@@ -115,8 +113,7 @@ class IpCheckLoader:
             ext_name = conf['name']
             # check if the trigger name contains only alpha caracters
             if not ext_name.isalpha():
-                self.__logger.error('[extension] Extension name "%s" must contains only alphabetical caracters',
-                                        ext_name)
+                self.__logger.error('[extension] Extension name "%s" must contains only alphabetical caracters', ext_name)
                 continue
             # import process
             try:
@@ -199,6 +196,7 @@ class IpCheckLoader:
             except KeyError as e:
                 self.__logger.error('[EXT] Extension "%s" require a missing parameters "%s"',
                                         ext.name, str(e))
+                self.__logger.exception(e)
             except AssertionError as e:
                 raise e
             except Exception as e:

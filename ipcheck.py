@@ -323,7 +323,17 @@ class IpCheck:
                 status = True
             # IPS MISMATCH
             else:
-                self.writeIpToLocalFile(ip_version, current_ip)
+                status = True
+                try:
+                    self.writeIpToLocalFile(ip_version, current_ip)
+                except IpCheckFileException:
+                    status = False
+                    if ipcheckadvanced:
+                        # @event : ERROR_FILE = bad ip from local file
+                        self.sendEvent(E_ERROR, T_ERROR_FILE, {
+                            'version_ip': ip_version,
+                            'error': str(e),
+                        })
                 self.__logger.info('New IPv%d %s', ip_version, current_ip)
                 # call user defined command
                 self.callCommand()
@@ -334,12 +344,21 @@ class IpCheck:
                         'current_ip': current_ip,
                         'previous_ip': previous_ip,
                     })
-                status = True
+
 
         # NO PREVIOUS IP FILE
         else:
             status = True
-            self.writeIpToLocalFile(ip_version, current_ip)
+            try:
+                self.writeIpToLocalFile(ip_version, current_ip)
+            except IpCheckFileException:
+                status = False
+                if ipcheckadvanced:
+                    # @event : ERROR_FILE = bad ip from local file
+                    self.sendEvent(E_ERROR, T_ERROR_FILE, {
+                        'version_ip': ip_version,
+                        'error': str(e),
+                    })
             self.__logger.info('Starting with IPv%d %s', ip_version, current_ip)
             # call user defined command
             self.callCommand()
@@ -350,6 +369,7 @@ class IpCheck:
                     'current_ip': current_ip,
                 })
 
+        # END OF CHECK
         if ipcheckadvanced:
             # @event : AFTER CHECK
             self.sendEvent(E_AFTER_CHECK, T_NORMAL, {
@@ -504,6 +524,7 @@ class IpCheck:
         @param ip [str] : the content to write in the file
         @return [bool] True if write success
                         False otherwise
+        @raise IpCheckFileException in case of error during IO operations
         """
         file_path = os.path.join(self.__tmp_directory,
                             self.__file_pattern.format(ip_version=protocol_version))
@@ -574,7 +595,7 @@ in a local file""")
                             help='The HTTP timeout in seconds for all requests')
     parser.add_argument('--no-ssl-cert', '--insecure', action='store', dest='tls_insecure', default=False,
                             help='Disable TLS certificate verification')
-    parser.add_argument('-u', '-u4', '--url', '--url-v4', action='append', dest='urls_v4',
+    parser.add_argument('-u4', '--url-v4', action='append', dest='urls_v4',
                             help='Add url to list of external ip sources')
     parser.add_argument('-u6', '--url-v6', action='append', dest='urls_v6',
                             help='Add url to list of external ip sources')
