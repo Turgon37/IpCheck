@@ -10,22 +10,6 @@ from connexionmock import ConnexionMock
 
 import ipcheck
 
-
-# command line test
-def test_cmdline():
-    """Must produce an error is no url was given"""
-    result = subprocess.Popen(shlex.split('./ipcheck.py --help'), stdout=subprocess.PIPE)
-    stdout, stderr = result.communicate()
-    assert 'usage:' in stdout.decode()
-
-    result = subprocess.Popen(shlex.split('./ipcheck.py --version'), stdout=subprocess.PIPE)
-    stdout, stderr = result.communicate()
-    assert 'IpCheck version' in stdout.decode()
-
-    result = subprocess.Popen(shlex.split('./ipcheck.py --url-v4 "localhost/"'), stdout=subprocess.PIPE)
-    stdout, stderr = result.communicate()
-    assert result.returncode == 1
-
 # URL settings
 def test_without_url():
     """Must produce an error is no url was given"""
@@ -141,7 +125,7 @@ def test_invalid_address_from_url(http_mock, https_mock, capsys):
 # Command hook
 @patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0'))
 def test_run_command_with_success(http_mock, capsys):
-    """Fetch a valid IP address from urls"""
+    """Run a command with success"""
     shutil.rmtree('tmp', ignore_errors=True)
 
     program = ipcheck.IpCheck()
@@ -152,7 +136,7 @@ def test_run_command_with_success(http_mock, capsys):
 # Command hook
 @patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0'))
 def test_run_command_with_failure(http_mock, capsys):
-    """Fetch a valid IP address from urls"""
+    """Run a command with success"""
     shutil.rmtree('tmp', ignore_errors=True)
 
     # http
