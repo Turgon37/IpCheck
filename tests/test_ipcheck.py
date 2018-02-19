@@ -149,3 +149,37 @@ def test_run_command_with_failure(http_mock, capsys):
     program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/2',
                         command='/bin/nonexistent')
     assert program.main() == 1
+
+
+# IP
+def test_run_ip_checking_with_good_value(capsys):
+    """Run a command with success"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
+    with patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0')) as http_mock:
+        program = ipcheck.IpCheck()
+        program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp')
+        assert program.main() == 0
+
+    with patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0')) as http_mock:
+        program = ipcheck.IpCheck()
+        program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp')
+        assert program.main() == 0
+
+# IP
+def test_run_ip_checking_with_bad_value(capsys):
+    """Run a command with success"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
+    with patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0')) as http_mock:
+        program = ipcheck.IpCheck()
+        program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp')
+        assert program.main() == 0
+
+    with open('tmp/ipv4', 'w') as tmp:
+        tmp.write('0.0.0')
+
+    with patch('http.client.HTTPConnection', return_value=ConnexionMock('0.0.0.0')) as http_mock:
+        program = ipcheck.IpCheck()
+        program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp')
+        assert program.main() == 1
