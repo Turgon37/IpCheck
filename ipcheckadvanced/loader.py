@@ -71,7 +71,7 @@ class IpCheckLoader:
                 if not self.cp.read(path):
                     raise configparser.Error('Unable to load from configuration file')
             except configparser.Error as e:
-                self.__logger.error('Unable to load from configuration file : %s', str(e))
+                self.__logger.error('Unable to load from configuration file : %s', str(e).replace('\n', ''))
                 return False
 
         self.__logger.debug('advanced configuration successfully loaded')
