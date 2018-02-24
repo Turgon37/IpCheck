@@ -470,9 +470,15 @@ class IpCheck:
                 self.__logger.error('Unhandled python exception please inform the developper %s', str(e))
                 continue
 
-            if res.status == 401:
+            if res.status != 200:
+                # authentication missing error
+                if res.status == 401:
+                    self.__logger.debug('  => the server may require an authentification')
+                    self.__logger.warning('The server at url "%s" may require an authentification', url)
+                    continue
+                # other potential error code
                 self.__logger.debug('  => the server may require an authentification')
-                self.__logger.warning('The server at url "%s" may require an authentification', url)
+                self.__logger.error('The server at url "%s" sent a non-successful http code %d => ignoring response.', url, res.status)
                 continue
 
             # lookup for ip matching

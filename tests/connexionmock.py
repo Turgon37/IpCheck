@@ -1,22 +1,32 @@
 # -*- coding: utf8 -*-
 
+import http.client
 import io
 from unittest.mock import Mock
 
 
-class ConnexionMock(object):
-    """This mock the http.client class"""
+def __mockConnection(connection_mock, response_data='', response_status=200):
+    # http response mock
+    response_mock = Mock(spec=http.client.HTTPResponse)
+    response_mock.read = io.BytesIO(response_data.encode()).read
+    response_mock.status = response_status
 
-    def __init__(self, response_data='', response_status=200):
-        # Methods
-        self.request = Mock()
-        self.close = Mock()
+    # connectionmock
+    connection_mock.getresponse.return_value = response_mock
 
-        self.response_data = io.BytesIO(response_data.encode())
-        self.response_status = response_status
+    # class mock
+    class_mock = Mock()
+    class_mock.return_value = connection_mock
 
-    def getresponse(self):
-        mocked_response = Mock()
-        mocked_response.read = self.response_data.read
-        mocked_response.status = Mock(return_value=self.response_status)
-        return mocked_response
+    return class_mock
+
+def createHTTPConnectionMock(*args, **params):
+    """Create a mock of the HTTPConnection class
+    """
+    return __mockConnection(Mock(spec=http.client.HTTPConnection), *args, **params)
+
+
+def createHTTPSConnectionMock(*args, **params):
+    """Create a mock of the HTTPSConnection class
+    """
+    return __mockConnection(Mock(spec=http.client.HTTPSConnection), *args, **params)
