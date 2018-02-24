@@ -14,7 +14,7 @@ import ipcheck
 import ipcheckadvanced
 
 
-# URL settings
+# CLI settings
 def test_argparse_extension(capsys):
     """Must """
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
@@ -27,6 +27,7 @@ def test_argparse_extension(capsys):
     out, err = capsys.readouterr()
     assert '--config' in out
 
+# URL settings
 @patch('http.client.HTTPConnection', createHTTPConnectionMock('0.0.0.0'))
 def test_valid_url_from_config(capsys):
     """Fetch a valid IP address from urls"""
@@ -45,6 +46,7 @@ def test_valid_url_from_config(capsys):
     program.configure(verbose=1, tmp_directory='tmp', config_file='tmp/config.ini')
     assert program.main() == 0
 
+# config settings
 @patch('http.client.HTTPConnection', createHTTPConnectionMock('0.0.0.0'))
 def test_invalid_config_file(capsys):
     """Fetch a valid IP address from urls"""
