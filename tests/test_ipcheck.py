@@ -4,8 +4,10 @@ import http.client
 import logging
 import shlex
 import shutil
+import socket
+import ssl
 import subprocess
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from connexionmock import createHTTPConnectionMock, createHTTPSConnectionMock
 
@@ -110,6 +112,19 @@ def test_valid_address_from_url(capsys):
     program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp/2/')
     assert program.main() == 0
 
+@patch('http.client.HTTPSConnection', createHTTPSConnectionMock('0.0.0.0'))
+@patch('ssl._create_unverified_context', return_value=Mock(spec=ssl.SSLContext))
+def test_insecure_https_address_from_url(ssl_context_mock, capsys):
+    """Fetch a valid IP address from urls"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
+    # https
+    program = ipcheck.IpCheck()
+    program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tls_insecure=True, tmp_directory='tmp/2/')
+    assert program.main() == 0
+
+    ssl._create_unverified_context.assert_called_once_with()
+
 @patch('http.client.HTTPConnection', createHTTPConnectionMock('0.0.0.'))
 @patch('http.client.HTTPSConnection', createHTTPSConnectionMock('0.0.0.'))
 def test_invalid_address_from_url(capsys):
@@ -125,6 +140,25 @@ def test_invalid_address_from_url(capsys):
     program = ipcheck.IpCheck()
     program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp/2')
     assert program.main() == 1
+
+
+# HTTP exeception
+@patch('http.client.HTTPConnection', createHTTPConnectionMock('0.0.0.0', raise_=http.client.HTTPException))
+@patch('http.client.HTTPSConnection', createHTTPSConnectionMock('0.0.0.0', raise_=socket.gaierror))
+def test_http_error_from_url(capsys):
+    """Catch an HttpError from urls"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
+    # http
+    program = ipcheck.IpCheck()
+    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/1/')
+    assert program.main() == 1
+
+    # https
+    program = ipcheck.IpCheck()
+    program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp/2/')
+    assert program.main() == 1
+
 
 # Command hook
 @patch('http.client.HTTPConnection', createHTTPConnectionMock('0.0.0.0'))
