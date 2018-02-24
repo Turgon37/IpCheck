@@ -117,6 +117,24 @@ def test_valid_address_from_url(capsys):
     program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp/2/')
     assert program.main() == 0
 
+@patch('http.client.HTTPConnection', createHTTPConnectionMock('Not authorized', 401))
+@patch('http.client.HTTPSConnection', createHTTPSConnectionMock('0.0.0.0', 200))
+def test_unautorized_http_url(capsys):
+    """Unable to fetch from urls because of missing credentials"""
+    shutil.rmtree('tmp', ignore_errors=True)
+
+    # https
+    program = ipcheck.IpCheck()
+    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/1/')
+    assert program.main() == 1
+
+    out, err = capsys.readouterr()
+    assert 'may require an authentification' in out
+
+    program = ipcheck.IpCheck()
+    program.configure(verbose=1, urls_v4=['https://user:password@0.0.0.0/'], tmp_directory='tmp/2/')
+    assert program.main() == 0
+
 @patch('http.client.HTTPSConnection', createHTTPSConnectionMock('0.0.0.0'))
 @patch('ssl._create_unverified_context', return_value=Mock(spec=ssl.SSLContext))
 def test_insecure_https_address_from_url(ssl_context_mock, capsys):
@@ -125,7 +143,7 @@ def test_insecure_https_address_from_url(ssl_context_mock, capsys):
 
     # https
     program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tls_insecure=True, tmp_directory='tmp/2/')
+    program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tls_insecure=True, tmp_directory='tmp/1/')
     assert program.main() == 0
 
     ssl._create_unverified_context.assert_called_once_with()
@@ -148,22 +166,32 @@ def test_invalid_address_from_url(capsys):
 
 
 # HTTP exeception
-@patch('http.client.HTTPConnection', createHTTPConnectionMock('0.0.0.0', raise_=http.client.HTTPException))
-@patch('http.client.HTTPSConnection', createHTTPSConnectionMock('0.0.0.0', raise_=socket.gaierror))
 def test_http_error_from_url(capsys):
     """Catch an HttpError from urls"""
     shutil.rmtree('tmp', ignore_errors=True)
 
-    # http
-    program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/1/')
-    assert program.main() == 1
+    with patch('http.client.HTTPConnection',
+                createHTTPConnectionMock('0.0.0.0', raise_=http.client.HTTPException)) as http_mock:
+        # http
+        program = ipcheck.IpCheck()
+        program.configure(verbose=1, urls_v4=['http://0.0.0.0/'], tmp_directory='tmp/1/')
+        assert program.main() == 1
 
-    # https
-    program = ipcheck.IpCheck()
-    program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp/2/')
-    assert program.main() == 1
+    with patch('http.client.HTTPSConnection',
+                createHTTPSConnectionMock('0.0.0.0', raise_=socket.gaierror)) as http_mock:
+        # https
+        program = ipcheck.IpCheck()
+        program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp/2/')
+        assert program.main() == 1
 
+    with patch('http.client.HTTPSConnection',
+                createHTTPSConnectionMock('0.0.0.0', raise_=ssl.SSLError)) as http_mock:
+        # https
+        program = ipcheck.IpCheck()
+        program.configure(verbose=1, urls_v4=['https://0.0.0.0/'], tmp_directory='tmp/3/')
+        assert program.main() == 1
+        out, err = capsys.readouterr()
+        assert 'You can override this by using --insecure' in out
 
 # Command hook
 @patch('http.client.HTTPConnection', createHTTPConnectionMock('0.0.0.0'))

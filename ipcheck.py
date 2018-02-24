@@ -291,7 +291,7 @@ class IpCheck:
         except IpCheckFileException as e:
             status = False
             if ipcheckadvanced:
-                # @event : ERROR_FILE = bad ip from local file
+                # @event : ERROR_FILE = bad file access right
                 self.sendEvent(E_ERROR, T_ERROR_FILE, {
                     'version_ip': ip_version,
                     'error': str(e),
@@ -299,6 +299,7 @@ class IpCheck:
         except IpCheckFileIpException as e:
             status = False
             if ipcheckadvanced:
+                # @event : ERROR_FILE = bad ip from local file
                 self.sendEvent(E_ERROR, T_ERROR_NOIP_FILE, {
                     'version_ip': ip_version,
                     'error': str(e),
@@ -428,13 +429,13 @@ class IpCheck:
             headers = {'User-Agent': 'ipcheck/' + __version__}
             # authentification
             if url_parts['user'] and url_parts['pass']:
-                self.__logger.debug('  -> authentication enabled')
                 # build the auth string
                 auth_str = url_parts['user'] + ':' + url_parts['pass']
                 # encode it as a base64 string to put in http header
                 auth = b64encode(auth_str.encode()).decode("ascii")
                 # fill the header
                 headers['Authorization'] = 'Basic ' + auth
+                self.__logger.debug('  -> authentication enabled')
             # /HEADER
 
             # URL
