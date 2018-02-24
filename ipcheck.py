@@ -50,12 +50,8 @@ else:
 try:
     import ipcheckadvanced
 except ImportError:
-    try:
-        sys.path.insert(1, "/usr/share")
-        import ipcheckadvanced
-    except ImportError as e:
-        ipcheckadvanced = None
-        print(e, file=sys.stderr)
+    ipcheckadvanced = None
+    print(e, file=sys.stderr)
 
 if ipcheckadvanced is not None:
     import types

@@ -49,7 +49,7 @@ def test_with_good_url_and_port():
 
     # http
     program = ipcheck.IpCheck()
-    program.configure(urls_v4='localhost:81/', tmp_directory='tmp/1')
+    program.configure(urls_v4='localhost:81/query', tmp_directory='tmp/1')
     assert program.main() == 0
 
 def test_with_bad_urls():
@@ -58,6 +58,11 @@ def test_with_bad_urls():
     program = ipcheck.IpCheck()
     program.configure(urls_v4=['http://lmdaz'])
     assert program.main() == 3
+
+    program = ipcheck.IpCheck()
+    program.configure(urls_v4=['ftp://lmdaz'])
+    assert program.main() == 3
+
     # ipv6
     program = ipcheck.IpCheck()
     program.configure(urls_v6=['http://lmdaz'])
