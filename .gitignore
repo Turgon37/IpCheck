@@ -1,6 +1,8 @@
 ### Git files
 #.gitignore
 *.pyc
+/.pytest_cache/
+/tmp/
 
 ### IDE working directory
 /nbproject

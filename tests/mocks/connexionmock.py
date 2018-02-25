@@ -10,11 +10,12 @@ def __createRaiser(exception):
     return will_raise
 
 
-def __mockConnection(connection_mock, response_data='', response_status=200, raise_=None):
+def __mockConnection(connection_mock, response_data='', response_status=200, response_reason='OK', raise_=None):
     # http response mock
     response_mock = Mock(spec=http.client.HTTPResponse)
     response_mock.read = io.BytesIO(response_data.encode()).read
     response_mock.status = response_status
+    response_mock.reason = response_reason
 
     # connectionmock
     connection_mock.getresponse.return_value = response_mock

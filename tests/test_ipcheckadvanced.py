@@ -7,7 +7,7 @@ import shutil
 from unittest.mock import patch
 
 # Project tests imports
-from connexionmock import createHTTPConnectionMock, createHTTPSConnectionMock
+from .mocks.connexionmock import createHTTPConnectionMock, createHTTPSConnectionMock
 
 # Project imports
 import ipcheck
