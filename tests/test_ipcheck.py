@@ -9,7 +9,7 @@ import ssl
 import subprocess
 from unittest.mock import patch, Mock
 
-from connexionmock import createHTTPConnectionMock, createHTTPSConnectionMock
+from .mocks.connexionmock import createHTTPConnectionMock, createHTTPSConnectionMock
 
 import ipcheck
 
