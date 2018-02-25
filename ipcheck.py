@@ -617,7 +617,7 @@ class IpCheck:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                         argument_default=argparse.SUPPRESS,
-                                        description='IpCheck version v' + __version__ + """
+                                        description='IpCheck version v' + __version__ + """ --
 This script retrieve the external (public) ip address and take it up-to-date
 in a local file""")
     parser.add_argument('-c', '--command', action='store', dest='command',
