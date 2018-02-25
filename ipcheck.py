@@ -174,6 +174,9 @@ class IpCheck:
         # set post update command
         if 'command' in options and options['command']:
             self.__command = options['command']
+        # http timeout
+        if 'timeout' in options and options['timeout']:
+            self.__timeout = options['timeout']
         # set tmp_directory
         if 'tmp_directory' in options and options['tmp_directory']:
             self.__tmp_directory = options['tmp_directory']
