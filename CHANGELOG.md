@@ -2,6 +2,24 @@
 
 Items starting with `DEPRECATE` are important deprecation notices.
 
+## 4.0.0 (2018-04-29)
+
+### core
+
+- Remove `-u`, `--url` command line option in favor to -u4 and --url-v4.
++ Refactor some functions to permit units tests
+
+### advanced
+
+- Removed support for 'url' config key in config.conf in favor to 'url_v4'
+- Renamed error event type T_ERROR_FILE to T_ERROR_NOIP_FILE
+- Renamed error event type T_ERROR_NOIP to T_ERROR_NOIP_URLS
+- Renamed error event type T_ERROR_PERMS to T_ERROR_FILE
+- Remove default value for digcheck nameserver, it allow to use the default nameserver configured in resolv.conf of the running host
+
+### Deprecation
+
+
 ## 3.0.0 (2018-02-11)
 
 ### core
@@ -16,7 +34,7 @@ Items starting with `DEPRECATE` are important deprecation notices.
 
 ### Deprecation
 
-- Deprecate `-u`, `--url` command line option and 'url' config key in config.conf in favor to -u4 and --url-v4.
+- `DEPRECATE` `-u`, `--url` command line options and 'url' config key in config.conf in favor to -u4 and --url-v4.
 
 ## 2.2.0 (2015-09-20)
 

@@ -76,7 +76,7 @@ class Extension(ExtensionBase):
         """Return the default configuration items for this extension
         """
         return super(Extension, self).getDefaultConfig({
-            'server': '8.8.8.8',
+            'server': None,
             'msg_subject': 'IPv{version_ip} digchecker lookup',
         })
 
@@ -101,7 +101,7 @@ class Extension(ExtensionBase):
         config = self.getDefaultConfig()
         config.update(self.configuration)
         if 'server' in config and self.RE_IP.match(config['server']) is None:
-            config['server'] = '8.8.8.8'
+            config['server'] = None
 
         if 'hostname' in config:
             if self.RE_HOST.match(config['hostname']) is None:
@@ -135,10 +135,11 @@ class Extension(ExtensionBase):
         conf = self.configuration
         if event not in [E_NOUPDATE] or type != T_NORMAL:
             return True
+        cmd = ['dig', '+noall', '+answer', conf['hostname']]
+        if conf['server']:
+            cmd.append('@{}'.format(conf['server']))
 
-        out = subprocess.check_output(['dig', '+noall', '+answer',
-                                            '@' + conf['server'],
-                                            conf['hostname'] ])
+        out = subprocess.check_output(cmd)
         match = self.RE_IP.search(out.decode())
         if match is None:
             self.sendEvent(E_ERROR, T_ERROR_EXTENSION, {
