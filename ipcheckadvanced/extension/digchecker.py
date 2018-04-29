@@ -100,7 +100,9 @@ class Extension(ExtensionBase):
 
         config = self.getDefaultConfig()
         config.update(self.configuration)
-        if 'server' in config and self.RE_IP.match(config['server']) is None:
+        if 'server' in config and (
+                      not isinstance(config['server'], str) or
+                      self.RE_IP.match(config['server'])         ) is None:
             config['server'] = None
 
         if 'hostname' in config:
@@ -155,13 +157,13 @@ class Extension(ExtensionBase):
         self.logger.debug('fetch external ip %s', str(ip))
         # error between current ip and dns registered ip
         if ip and ip != data['current_ip']:
-            self.logger.error('Inconsistency detected between local ip and lookup ip')
+            self.logger.error('Inconsistency detected between local ip and DNS ip')
             self.sendEvent(E_ERROR, T_CUSTOM, {
                 'subject': conf.get('msg_subject'),
-                'msg': ('An error appear with IPv{version_ip} address lookup.' +
-                   '\nThe looked up address is {digchecker_lookup_ip}' +
-                   ' and dismatch with current IPv{version_ip} {current_ip}.' +
-                   '\nIpCheck will trigger an forced update to fix the situation.'),
+                'msg': ('An inconsistent error appear with IPv{version_ip} address.' +
+                   '\nThe reported IPv{version_ip} address is {digchecker_lookup_ip}' +
+                   ' and it mismatch with current IPv{version_ip} address {current_ip}.' +
+                   '\nIpCheck will trigger a forced update to fix the situation.'),
                 'digchecker_lookup_ip': ip,
             }, data)
             # trigger manually an new update
